@@ -1,0 +1,18 @@
+Header header
+
+geometry_msgs/Vector3 goalPosition
+geometry_msgs/Vector3 goalVelocity
+geometry_msgs/Vector3 goalAcceleration
+geometry_msgs/Vector3 goalJerk
+
+geometry_msgs/Vector3 startPosition
+geometry_msgs/Vector3 startVelocity
+geometry_msgs/Vector3 startAcceleration
+geometry_msgs/Vector3 startJerk
+
+nav_msgs/OccupancyGrid map
+
+---
+
+std_msgs/Float32MultiArray trajectory
+std_msgs/Float32MultiArray segmentTimes
