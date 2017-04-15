@@ -42,6 +42,10 @@ catkin_package(
    DEPENDS eigen 
 )
 
+add_library(polynomial include/pauvsi_trajectory/Polynomial.hpp)
+set_target_properties(polynomial PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(polynomial ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
+
 add_executable(trajectory_server src/trajectory_server.cpp)
 target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 add_dependencies(trajectory_server ${PROJECT_NAME}_generate_messages_cpp)
