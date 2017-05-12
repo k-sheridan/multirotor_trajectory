@@ -46,8 +46,15 @@ add_library(polynomial include/pauvsi_trajectory/Polynomial.hpp)
 set_target_properties(polynomial PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(polynomial ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
 
+add_library(types include/pauvsi_trajectory/Types.h)
+set_target_properties(types PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(types ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
+
+add_library(trajGen include/pauvsi_trajectory/TrajectoryGenerator.cpp)
+target_link_libraries(trajGen ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
+
 add_executable(trajectory_server src/trajectory_server.cpp)
-target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
+target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen_LIBRARIES} trajGen)
 add_dependencies(trajectory_server ${PROJECT_NAME}_generate_messages_cpp)
 
 
