@@ -10,14 +10,13 @@
 
 #include <eigen3/Eigen/Geometry>
 #include <vector>
-
-#include <unsupported/Eigen/Polynomials>
+#include "Types.h"
 #include <iostream>
 
 /*
  * finds the derivative of polynomial coefficients
  */
-std::vector<double> polyDer(std::vector<double> in)
+Polynomial polyDer(Polynomial in)
 {
 	int size = in.size();
 	std::vector<double> new_poly;
@@ -27,7 +26,7 @@ std::vector<double> polyDer(std::vector<double> in)
 	return new_poly;
 }
 
-double polyVal(std::vector<int> in, double t)
+double polyVal(Polynomial in, double t)
 {
 	double result=0;
 	int size = in.size();
@@ -37,19 +36,8 @@ double polyVal(std::vector<int> in, double t)
 	return result;
 }
 
-void polyRoot(std::vector<double> in){
-	Eigen::Vector4d roots = Eigen::Vector4d::Random();
-	cout << "Roots: " << roots.transpose() << endl;
-	Eigen::Matrix<double,5,1> polynomial;
-	roots_to_monicPolynomial( roots, polynomial );
-	cout << "Polynomial: ";
-	for( int i=0; i<4; ++i ){ cout << polynomial[i] << ".x^" << i << "+ "; }
-	cout << polynomial[4] << ".x^4" << endl;
-	Eigen:: Vector4d evaluation;
-	for( int i=0; i<4; ++i ){
-		evaluation[i] = poly_eval( polynomial, roots[i] ); }
-	cout << "Evaluation of the polynomial at the roots: " << evaluation.transpose();
-	return evaluation;
+void polyRoot(Polynomial in, double t0, double tf){
+
 }
 
 
