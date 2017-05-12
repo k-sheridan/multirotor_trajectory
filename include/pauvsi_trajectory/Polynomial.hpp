@@ -29,9 +29,10 @@ Polynomial polyDer(Polynomial in)
 double polyVal(Polynomial in, double t)
 {
 	double result=0;
-	int size = in.size();
-	for (int i=0; i < size; i++){
-		result += in[i]*pow(t,size-i);
+	double t_agg = 1;
+	for (Polynomial::iterator it = in.end() - 1; it != in.begin(); it--){
+		result += t_agg * (*it);
+		t_agg *= t;
 	}
 	return result;
 }
