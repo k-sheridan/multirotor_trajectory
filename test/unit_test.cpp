@@ -55,6 +55,36 @@ int main(int argc, char **argv)
 	ROS_INFO_STREAM(" at t = " << t );
 	ROS_ASSERT(fabs(t - 5) < 0.1);
 
+	//test poly sol
+	PolynomialConstraints pc;
+	pc.x0 = -10;
+	pc.dx0 = 1;
+	pc.ax0 = 4;
+	pc.jerk_x0 = 0;
+	pc.snap_x0 = 0;
+
+	pc.xf = 0;
+	pc.dxf = 9;
+	pc.axf = 4;
+	pc.jerk_xf = 0;
+	pc.snap_xf = 0;
+
+	Polynomial polyRes(10, 1);
+	polyRes << 0, 0, 0, 0, 0, 0, 0, 2, 1, -10;
+
+	ROS_INFO_STREAM("expect poly " << polyRes.transpose() << " got " << trajGen.solvePoly(pc, 2).transpose());
+
+
+	Polynomial solution = trajGen.solvePoly(pc, 2);
+
+	ROS_INFO_STREAM("t = 0: " << polyVal(solution, 0) << " t = 2: " << polyVal(solution, 2));
+	ROS_INFO_STREAM("t = 0: " << polyVal(polyDer(solution), 0) << " t = 2: " << polyVal(polyDer(solution), 2));
+	ROS_INFO_STREAM("t = 0: " << polyVal(polyDer(polyDer(solution)), 0) << " t = 2: " << polyVal(polyDer(polyDer(solution)), 2));
+
+	Eigen::VectorXd b(10, 1);
+	b << pc.x0,pc.dx0,pc.ax0,pc.jerk_x0,pc.snap_x0,pc.xf,pc.dxf,pc.axf,pc.jerk_xf,pc.snap_xf;
+
+	ROS_ASSERT((trajGen.generatePolyMatrix(2) * solution - b).norm() < 0.0001);
 
 
 

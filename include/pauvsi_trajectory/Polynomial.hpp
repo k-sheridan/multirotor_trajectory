@@ -12,13 +12,14 @@
 #include <vector>
 #include "Types.h"
 #include <iostream>
+#include "ros/ros.h"
 
 #include "Config.h"
 
 /*
  * finds the derivative of polynomial coefficients
  */
-Polynomial polyDer(Polynomial& in)
+Polynomial polyDer(Polynomial in)
 {
 	int size = in.size();
 	Polynomial new_poly(size - 1, 1);
@@ -28,7 +29,7 @@ Polynomial polyDer(Polynomial& in)
 	return new_poly;
 }
 
-double polyVal(Polynomial& in, double t)
+double polyVal(Polynomial in, double t)
 {
 	double result=0;
 	double t_agg = 1;

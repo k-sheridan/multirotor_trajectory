@@ -15,6 +15,7 @@
 #include <eigen3/Eigen/Geometry>
 
 #include "Types.h"
+#include "Polynomial.hpp"
 
 
 class TrajectoryGenerator {
@@ -23,6 +24,7 @@ public:
 	virtual ~TrajectoryGenerator();
 
 	Eigen::Matrix<double, 10, 10> generatePolyMatrix(double tf);
+	Polynomial solvePoly(PolynomialConstraints constraints, double tf);
 };
 
 #endif /* PAUVSI_M7_PAUVSI_TRAJECTORY_INCLUDE_PAUVSI_TRAJECTORY_TRAJECTORYGENERATOR_H_ */
