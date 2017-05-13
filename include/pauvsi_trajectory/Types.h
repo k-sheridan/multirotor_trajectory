@@ -17,7 +17,7 @@ struct PolynomialConstraints{
 	double snap_x0, snap_xf; // 4th der
 };
 
-typedef std::vector<double> Polynomial; // highest order coeff first
+typedef Eigen::VectorXd Polynomial; // highest order coeff first
 
 
 #endif /* PAUVSI_TRAJECTORY_INCLUDE_PAUVSI_TRAJECTORY_TYPES_H_ */

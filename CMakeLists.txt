@@ -51,10 +51,13 @@ set_target_properties(types PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(types ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
 
 add_library(trajGen include/pauvsi_trajectory/TrajectoryGenerator.cpp)
-target_link_libraries(trajGen ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(trajGen ${Eigen_LIBRARIES} ${catkin_LIBRARIES} polynomial types)
 
 add_executable(trajectory_server src/trajectory_server.cpp)
 target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen_LIBRARIES} trajGen)
 add_dependencies(trajectory_server ${PROJECT_NAME}_generate_messages_cpp)
+
+add_executable(unit_test test/unit_test.cpp)
+target_link_libraries(unit_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} trajGen polynomial)
 
 
