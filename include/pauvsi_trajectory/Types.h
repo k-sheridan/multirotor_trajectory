@@ -43,6 +43,9 @@ struct PhysicalCharacterisics{
 
 	double max_motor_thrust; // N
 	double min_motor_thrust; // N
+
+	Eigen::Matrix4d torqueTransition; // matrix which maps motor forces to total force and moments
+	Eigen::Matrix4d torqueTransition_inv; // maps total force and moments to motor forces
 };
 
 

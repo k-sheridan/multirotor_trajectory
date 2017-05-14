@@ -137,6 +137,13 @@ Eigen::Vector4d TrajectoryGenerator::calculateMotorForces(EfficientTrajectorySeg
 	Eigen::Vector3d omega_dot_body;
 	omega_dot_body << tempCross(0), tempCross(1), 0; // this is the body angular acceleration about the x and y axis
 
+	//calculate the moments required
+	Eigen::Vector3d moment_body = physical.J * omega_dot_body + omega_body.cross(physical.J * omega_body);
+
+	Eigen::Vector4d b;
+	b << f_total, moment_body(0), moment_body(1), moment_body(2);
+
+	return physical.torqueTransition_inv * b;
 
 }
 
