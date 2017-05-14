@@ -49,3 +49,54 @@ Polynomial TrajectoryGenerator::solvePoly(PolynomialConstraints constraints, dou
 	return this->generatePolyMatrix(tf).inverse() * b;
 }
 
+/*
+ * calculates all derivatives of trajectory segment and stores them
+ */
+EfficientTrajectorySegment TrajectoryGenerator::preComputeTrajectorySegment(TrajectorySegment pos)
+{
+	EfficientTrajectorySegment result;
+
+	result.pos = pos;
+	result.vel = polyDer(result.pos);
+	result.accel = polyDer(result.vel);
+	result.jerk = polyDer(result.accel);
+	result.snap = polyDer(result.jerk);
+
+	return result;
+}
+
+/*
+ * tests if trajectory segment is physically feasible for the quadrotor to perform
+ */
+bool TrajectoryGenerator::testSegmentForFeasibilityFAST(TrajectorySegment seg, PhysicalCharacterisics physical)
+{
+	Polynomial ax = polyDer(polyDer(seg.x));
+	Polynomial ay = polyDer(polyDer(seg.y));
+	Polynomial az = polyDer(polyDer(seg.z));
+
+	Polynomial snap_x = polyDer(polyDer(ax));
+	Polynomial snap_y = polyDer(polyDer(ay));
+	Polynomial snap_z = polyDer(polyDer(az));
+
+	//first check if quad is in free fall
+	if((polyMin(az, 0, seg.tf) + G) < physical.min_motor_thrust * 4){
+		return false; // the quad would need to be inverted to fly this!
+	}
+
+
+}
+
+/*
+ * computes the motor forces required at time t
+ */
+Eigen::Vector4d TrajectoryGenerator::calculateMotorForces(EfficientTrajectorySegment ts, PhysicalCharacterisics physical, double t)
+{
+	Eigen::Vector3d accel = polyVal(ts.accel, t); // acceleration at time t
+
+	// calculate the inertial frame force required at max acceleration
+	Eigen::Vector3d F_inertial = physical.mass * accel;
+	F_inertial(2) += physical.mass * G; // add the FORCE due to gravity
+
+	double f_total = F_inertial.norm(); // the total force required at max acceleration
+}
+
