@@ -88,15 +88,55 @@ bool TrajectoryGenerator::testSegmentForFeasibilityFAST(TrajectorySegment seg, P
 
 /*
  * computes the motor forces required at time t
+ * extremely theoretical but should work
  */
 Eigen::Vector4d TrajectoryGenerator::calculateMotorForces(EfficientTrajectorySegment ts, PhysicalCharacterisics physical, double t)
 {
 	Eigen::Vector3d accel = polyVal(ts.accel, t); // acceleration at time t
+	Eigen::Vector3d jerk = polyVal(ts.jerk, t); // jerk at time t
+	Eigen::Vector3d snap = polyVal(ts.snap, t); // snap at time t
 
 	// calculate the inertial frame force required at max acceleration
 	Eigen::Vector3d F_inertial = physical.mass * accel;
 	F_inertial(2) += physical.mass * G; // add the FORCE due to gravity
 
 	double f_total = F_inertial.norm(); // the total force required at max acceleration
+
+	Eigen::Vector3d F_inertial_bar = F_inertial / f_total; // should find the direction vector of f inertial
+
+	//setup the F_body vectors
+	Eigen::Vector3d F_body;
+	F_body << 0, 0, f_total;
+
+	Eigen::Vector3d F_body_bar;
+	F_body_bar << 0, 0, 1;
+
+	//calculate the F_dot_inertial
+	Eigen::Vector3d F_dot_inertial = physical.mass * jerk;
+
+	Eigen::Vector3d F_dot_inertial_bar = (F_dot_inertial / f_total) - (F_inertial * F_inertial.transpose() * F_dot_inertial) / pow(f_total, 3); // equation 3.20 in Cutler's paper
+
+
+	//calculate the desired angular rate
+	Eigen::Vector3d tempCross = F_inertial_bar.cross(F_dot_inertial_bar);
+
+	Eigen::Vector3d omega_body;
+	omega_body << tempCross(0), tempCross(1), 0; // project onto the x-y plane
+
+	//calculate the second derivative of inertial frame force unit vector
+	Eigen::Vector3d F_dot_dot_inertial = physical.mass * snap;
+
+	Eigen::Vector3d F_dot_dot_inertial_bar = (F_dot_dot_inertial / f_total) -
+			(2 * F_dot_inertial * F_inertial.transpose() * F_dot_inertial   +   F_inertial * F_dot_inertial.transpose() * F_dot_inertial    +
+					F_inertial * F_inertial.transpose() * F_dot_dot_inertial) / pow(f_total, 3)  +
+					(3 * F_inertial * F_inertial.transpose() * F_dot_inertial) / pow(f_total, 5);
+
+	// calculate the angular acceleration now
+	tempCross = F_inertial_bar.cross((F_dot_dot_inertial_bar - omega_body.cross(omega_body.cross(F_dot_inertial_bar))));
+
+	Eigen::Vector3d omega_dot_body;
+	omega_dot_body << tempCross(0), tempCross(1), 0; // this is the body angular acceleration about the x and y axis
+
+
 }
 
