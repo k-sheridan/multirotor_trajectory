@@ -102,9 +102,9 @@ int main(int argc, char **argv)
 	phys.max_motor_thrust = 25;
 
 	phys.torqueTransition << 1, 1, 1, 1,
-							-0.25, -0.25, 0.25, 0.25,
-							-0.25, 0.25, 0.25, -0.25,
-							0.01, -0.01, 0.01, -0.01;
+							0.25, 0.25, -0.25, -0.25,
+							0.25, -0.25, -0.25, 0.25,
+							-0.01, 0.01, -0.01, 0.01;
 
 	phys.torqueTransition_inv = phys.torqueTransition.inverse();
 
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 	tc.const_z = c;
 	c.xf = 1;
 	tc.const_y = c;
-	c.xf = 0;
+	c.xf = 1;
 	tc.const_x = c;
 
 
