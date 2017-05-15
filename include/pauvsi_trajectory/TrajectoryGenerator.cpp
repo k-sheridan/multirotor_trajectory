@@ -46,7 +46,61 @@ Polynomial TrajectoryGenerator::solvePoly(PolynomialConstraints constraints, dou
 	Eigen::VectorXd b(10, 1);
 	b << constraints.x0,constraints.dx0,constraints.ax0,constraints.jerk_x0,constraints.snap_x0,constraints.xf,constraints.dxf,constraints.axf,constraints.jerk_xf,constraints.snap_xf;
 
-	return this->generatePolyMatrix(tf).inverse() * b;
+	return this->generatePolyMatrix(tf).lu().solve(b);
+}
+
+TrajectorySegment TrajectoryGenerator::solveSegment(TrajectoryConstraints constraints, double tf)
+{
+	TrajectorySegment seg;
+	seg.tf = tf;
+
+	seg.x = this->solvePoly(constraints.const_x, seg.tf);
+	seg.y = this->solvePoly(constraints.const_y, seg.tf);
+	seg.z = this->solvePoly(constraints.const_z, seg.tf);
+
+	return seg;
+}
+
+/*
+ * finds the minimum time feasible trajectory for these constraints
+ */
+TrajectorySegment TrajectoryGenerator::computeMinimumTimeTrajectorySegment(TrajectoryConstraints constraints, PhysicalCharacterisics physical, double tf_guess)
+{
+	TrajectorySegment seg;
+	TrajectorySegment high_seg;
+
+	double t_low = MIN_SEGMENT_TIME;
+	double t_curr = tf_guess;
+	double t_high = MAX_SEGMENT_TIME;
+
+	for(int i = 0; i < TIME_OPTIM_ITER - 1; i++)
+	{
+		seg = solveSegment(constraints, t_curr); // solve to segment at curr
+		if(testSegmentForFeasibilityFAST(seg, physical)) // if the segment is too slow
+		{
+			t_high = t_curr;
+			t_curr = t_low + (t_high - t_low) / 2;
+			high_seg = seg;
+		}
+		else
+		{
+			t_low = t_curr;
+			t_curr = t_low + (t_high - t_low) / 2;
+		}
+
+		ROS_DEBUG_STREAM("t_curr: " << t_curr);
+	}
+
+	seg = solveSegment(constraints, t_curr); // solve to segment at curr
+	if(testSegmentForFeasibilityFAST(seg, physical)) // if the segment is too slow
+	{
+		return seg;
+	}
+	else
+	{
+		return high_seg;
+	}
+
 }
 
 /*
@@ -70,20 +124,44 @@ EfficientTrajectorySegment TrajectoryGenerator::preComputeTrajectorySegment(Traj
  */
 bool TrajectoryGenerator::testSegmentForFeasibilityFAST(TrajectorySegment seg, PhysicalCharacterisics physical)
 {
-	Polynomial ax = polyDer(polyDer(seg.x));
-	Polynomial ay = polyDer(polyDer(seg.y));
-	Polynomial az = polyDer(polyDer(seg.z));
+	EfficientTrajectorySegment eff_seg = preComputeTrajectorySegment(seg);
 
-	Polynomial snap_x = polyDer(polyDer(ax));
-	Polynomial snap_y = polyDer(polyDer(ay));
-	Polynomial snap_z = polyDer(polyDer(az));
-
+	/*
 	//first check if quad is in free fall
-	if((polyMin(az, 0, seg.tf) + G) < physical.min_motor_thrust * 4){
+	if(!checkForces(calculateMotorForces(eff_seg, physical, polyMinTime(eff_seg.accel.z, 0, eff_seg.accel.tf)), physical)){
+		ROS_DEBUG_STREAM("FREE FALL");
 		return false; // the quad would need to be inverted to fly this!
 	}
 
+	double t = 0;
+	// get the point of maximum acceleration
+	polyVectorMaxFAST(eff_seg.accel.x, eff_seg.accel.y, eff_seg.accel.z, 0, eff_seg.accel.tf, t);
 
+	//check the forces at that point
+	if(!checkForces(calculateMotorForces(eff_seg, physical, t), physical)){
+		ROS_DEBUG_STREAM("FORCE TOO HIGH");
+		return false; // the quad would need too much force
+	}
+
+	// get the point of maximum snap
+	polyVectorMaxFAST(eff_seg.snap.x, eff_seg.snap.y, eff_seg.snap.z, 0, eff_seg.snap.tf, t);
+
+	//check the forces at that point
+	if(!checkForces(calculateMotorForces(eff_seg, physical, t), physical)){
+		ROS_DEBUG_STREAM("TORQUE TOO HIGH");
+		return false; // the quad would need too much torque
+	}*/
+
+	for(double t = 0; t < seg.tf + FEASIBILITY_DT_FAST; t += FEASIBILITY_DT_FAST)
+	{
+		if(!checkForces(calculateMotorForces(eff_seg, physical, t), physical))
+		{
+			ROS_DEBUG_STREAM("failed force test: " << calculateMotorForces(eff_seg, physical, t));
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /*
@@ -147,3 +225,23 @@ Eigen::Vector4d TrajectoryGenerator::calculateMotorForces(EfficientTrajectorySeg
 
 }
 
+/*
+ * checks if forces are within bounds
+ */
+bool TrajectoryGenerator::checkForces(Eigen::Vector4d forces, PhysicalCharacterisics& physical)
+{
+	if(forces(0) > physical.max_motor_thrust || forces(0) < physical.min_motor_thrust){
+		return false;
+	}
+	if(forces(1) > physical.max_motor_thrust || forces(1) < physical.min_motor_thrust){
+		return false;
+	}
+	if(forces(2) > physical.max_motor_thrust || forces(2) < physical.min_motor_thrust){
+		return false;
+	}
+	if(forces(3) > physical.max_motor_thrust || forces(3) < physical.min_motor_thrust){
+		return false;
+	}
+
+	return true;
+}

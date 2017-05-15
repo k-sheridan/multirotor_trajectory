@@ -17,6 +17,10 @@ struct PolynomialConstraints{
 	double snap_x0, snap_xf; // 4th der
 };
 
+struct TrajectoryConstraints{
+	PolynomialConstraints const_x, const_y, const_z;
+};
+
 typedef Eigen::VectorXd Polynomial; // highest order coeff first
 
 struct TrajectorySegment{

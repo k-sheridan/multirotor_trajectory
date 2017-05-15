@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 	ROS_INFO_STREAM(" at t = " << t );
 	ROS_ASSERT(fabs(t - 5) < 0.1);
 
-	ROS_INFO_STREAM("min z val over 0-5: " << polyMin(z, 0, 5));
+	ROS_INFO_STREAM("min z time over 0-5: " << polyMinTime(z, 0, 5));
 
 	//test poly sol
 	PolynomialConstraints pc;
@@ -90,6 +90,58 @@ int main(int argc, char **argv)
 
 	ROS_ASSERT((trajGen.generatePolyMatrix(2) * solution - b).norm() < 0.0001);
 
+	//trajectory
+
+	PhysicalCharacterisics phys;
+	phys.mass = 5;
+	phys.J << 0.75, 0, 0,
+			0, 0.75, 0,
+			0, 0, 0.75;
+
+	phys.min_motor_thrust = 0.1;
+	phys.max_motor_thrust = 25;
+
+	phys.torqueTransition << 1, 1, 1, 1,
+							-0.25, -0.25, 0.25, 0.25,
+							-0.25, 0.25, 0.25, -0.25,
+							0.01, -0.01, 0.01, -0.01;
+
+	phys.torqueTransition_inv = phys.torqueTransition.inverse();
+
+	PolynomialConstraints c;
+	c.x0 = 0;
+	c.dx0 = 0;
+	c.ax0 = 0;
+	c.jerk_x0 = 0;
+	c.snap_x0 = 0;
+
+	c.xf = 10;
+	c.dxf = 0;
+	c.axf = 0;
+	c.jerk_xf = 0;
+	c.snap_xf = 0;
+
+	TrajectoryConstraints tc;
+
+	tc.const_z = c;
+	c.xf = 1;
+	tc.const_y = c;
+	c.xf = 0;
+	tc.const_x = c;
+
+
+	TrajectorySegment ans = trajGen.computeMinimumTimeTrajectorySegment(tc, phys, 5.0);
+
+	ROS_INFO_STREAM("time to fly: " << ans.tf);
+	ROS_INFO_STREAM("X: " << ans.x.transpose() << "\nY: " << ans.y.transpose() << "\nZ: " << ans.z.transpose());
+
+	EfficientTrajectorySegment eff_seg = trajGen.preComputeTrajectorySegment(ans);
+
+	ROS_INFO_STREAM("motor force at start: " << trajGen.calculateMotorForces(eff_seg, phys, 0.0));
+	ROS_INFO_STREAM("motor force at 1/4: " << trajGen.calculateMotorForces(eff_seg, phys, ans.tf / 4));
+	ROS_INFO_STREAM("motor force at middle: " << trajGen.calculateMotorForces(eff_seg, phys, ans.tf / 2));
+	ROS_INFO_STREAM("motor force at 3/4: " << trajGen.calculateMotorForces(eff_seg, phys, ans.tf *0.75));
+	ROS_INFO_STREAM("motor force at end: " << trajGen.calculateMotorForces(eff_seg, phys, ans.tf));
 
 
 

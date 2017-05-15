@@ -80,19 +80,21 @@ double polyMaxTime(Polynomial& in, double t0, double tf){
 /*
  * returns the time at which an absolute maximum is found
  */
-double polyMin(Polynomial& in, double t0, double tf){
+double polyMinTime(Polynomial& in, double t0, double tf){
 	double min = 0;
-	double temp;
-	for(double t = t0; t < tf; t += POLYMAX_DT_FAST)
-	{
-		temp = polyVal(in, t);
-		if(temp < min)
+		double minT = t0;
+		double temp;
+		for(double t = t0; t < tf; t += POLYMAX_DT_FAST)
 		{
-			min = temp;
+			temp = polyVal(in, t);
+			if(temp < min)
+			{
+				min = temp;
+				minT = t;
+			}
 		}
-	}
 
-	return min;
+		return minT;
 }
 
 /*
