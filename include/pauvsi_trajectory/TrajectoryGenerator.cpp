@@ -16,6 +16,71 @@ TrajectoryGenerator::~TrajectoryGenerator() {
 	// TODO Auto-generated destructor stub
 }
 
+//DYNAMIC POLYNOMIALS
+/*
+ * ASSUMES: the start time is 0
+ *
+ * forms the polynomial matrix for a complex polynomial trajectory with variable midpoints
+ */
+Eigen::MatrixXd TrajectoryGenerator::generateDynamicPolyMatrix(DynamicTrajectoryConstraints constraints)
+{
+	int midPointCount = constraints.middle.size();
+	int dim = 10 + midPointCount; // the two endpoints make 10 degrees and then each middle way point adds another
+
+	ROS_DEBUG_STREAM("dynamic matrix size is " << dim);
+
+	Eigen::MatrixXd A = Eigen::MatrixXd::Zero(dim, dim); // creates the dim X dim mat
+
+	//setup the start constraint
+	A(0, dim-1) = 1;
+	A(1, dim-2) = 1;
+	A(2, dim-3) = 2;
+	A(3, dim-4) = 6;
+	A(4, dim-5) = 24;
+
+	for(int i = 0; i < midPointCount; i++)
+	{
+		double t_const = constraints.middle.at(i).t;
+		double t_pow = 1;
+		for(int j = 0; j < dim; j++)
+		{
+			ROS_DEBUG_STREAM("addressing: " << 5 + i << ", " << dim - 1 - j);
+			A(5 + i, dim - j - 1) = t_pow;
+			t_pow *= t_const; // increase power of t_pow
+		}
+	}
+
+	Polynomial poly = Eigen::MatrixXd::Ones(dim, 1);
+	double t_pow[dim];
+	double t_const = constraints.end.t;
+	ROS_ASSERT(dim > 2);
+	t_pow[dim-1] = 1;
+	for(int i = dim - 2; i >= 0; i--)
+	{
+		t_pow[i] = t_const * t_pow[i+1];
+	}
+
+	for(int i = 0; i < 5; i++)
+	{
+		for(int j = 0; j < dim; j++)
+		{
+			ROS_DEBUG_STREAM("addressing: " << 5 + i + midPointCount << ", " << j);
+			if(i + j >= dim)
+			{
+				A(i + 5 + midPointCount, j) = 0;
+			}
+			else
+			{
+				A(i + 5 + midPointCount, j) = poly(j) * t_pow[i + j];
+			}
+		}
+
+		poly = polyDer(poly);
+	}
+
+	return A;
+}
+
 Eigen::Matrix<double, 10, 10> TrajectoryGenerator::generatePolyMatrix(double tf)
 {
 	double tf_2 = tf*tf;

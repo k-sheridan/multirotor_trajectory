@@ -144,6 +144,32 @@ int main(int argc, char **argv)
 	ROS_INFO_STREAM("motor force at end: " << trajGen.calculateMotorForces(eff_seg, phys, ans.tf));
 
 
+	//DYNAMIC TRAJECTORY
+
+	DynamicTrajectoryConstraints dc;
+
+	dc.start.t = 0;
+	dc.start.pos = Point(0, 0, 0);
+	dc.start.vel = Point(0, 0, 0);
+	dc.start.accel = Point(0, 0, 0);
+	dc.start.jerk = Point(0, 0, 0);
+	dc.start.snap = Point(0, 0, 0);
+
+	dc.end.t = 6;
+	dc.end.pos = Point(10, 0, 0.5);
+	dc.end.vel = Point(0, 0, 0);
+	dc.end.accel = Point(0, 0, 0);
+	dc.end.jerk = Point(0, 0, 0);
+	dc.end.snap = Point(0, 0, 0);
+
+	dc.middle.push_back(BasicWaypointConstraint(Point(5, 0, 0.5), 3));
+
+	Eigen::MatrixXd A = trajGen.generateDynamicPolyMatrix(dc);
+
+	ROS_INFO_STREAM(trajGen.generatePolyMatrix(6));
+	ROS_INFO_STREAM(A);
+
+
 
 	return 0;
 }
