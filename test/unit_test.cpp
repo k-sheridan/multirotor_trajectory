@@ -74,10 +74,10 @@ int main(int argc, char **argv)
 	Polynomial polyRes(10, 1);
 	polyRes << 0, 0, 0, 0, 0, 0, 0, 2, 1, -10;
 
-	ROS_INFO_STREAM("expect poly " << polyRes.transpose() << " got " << trajGen.solvePoly(pc, 2).transpose());
+	ROS_INFO_STREAM("expect poly " << polyRes.transpose() << " got " << trajGen.solvePoly(pc, trajGen.generatePolyMatrix(2).lu().inverse()).transpose());
 
 
-	Polynomial solution = trajGen.solvePoly(pc, 2);
+	Polynomial solution = trajGen.solvePoly(pc, trajGen.generatePolyMatrix(2).lu().inverse());
 
 	ROS_INFO_STREAM("t = 0: " << polyVal(solution, 0) << " t = 2: " << polyVal(solution, 2));
 	ROS_INFO_STREAM("t = 0: " << polyVal(polyDer(solution), 0) << " t = 2: " << polyVal(polyDer(solution), 2));
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 	c.jerk_x0 = 0;
 	c.snap_x0 = 0;
 
-	c.xf = 10;
+	c.xf = 2.5;
 	c.dxf = 0;
 	c.axf = 0;
 	c.jerk_xf = 0;

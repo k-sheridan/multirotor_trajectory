@@ -21,12 +21,41 @@ struct TrajectoryConstraints{
 	PolynomialConstraints const_x, const_y, const_z;
 };
 
+struct Point{
+	double x, y, z;
+};
+
+struct AdvancedWaypointConstraint{
+	Point pos;
+	Point vel;
+	Point accel;
+	Point jerk;
+	Point snap;
+	double t;
+};
+
+struct BasicWaypointConstraint{
+	Point pos;
+	double t;
+};
+
+struct DynamicTrajectoryConstraints{
+	AdvancedWaypointConstraint start, end;
+	std::vector<BasicWaypointConstraint> middle; // contains the middle points
+};
+
 typedef Eigen::VectorXd Polynomial; // highest order coeff first
 
 struct TrajectorySegment{
 	Polynomial x, y, z; //polynomial with respect to t
 	double tf;
-	//t0 = 0
+	double t0;
+
+	TrajectorySegment()
+	{
+		tf = 0;
+		t0 = 0;
+	}
 };
 
 struct EfficientTrajectorySegment{

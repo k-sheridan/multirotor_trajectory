@@ -41,12 +41,12 @@ Eigen::Matrix<double, 10, 10> TrajectoryGenerator::generatePolyMatrix(double tf)
 	return A;
 }
 
-Polynomial TrajectoryGenerator::solvePoly(PolynomialConstraints constraints, double tf)
+Polynomial TrajectoryGenerator::solvePoly(PolynomialConstraints constraints, Eigen::Matrix<double, 10, 10> A_inv)
 {
 	Eigen::VectorXd b(10, 1);
 	b << constraints.x0,constraints.dx0,constraints.ax0,constraints.jerk_x0,constraints.snap_x0,constraints.xf,constraints.dxf,constraints.axf,constraints.jerk_xf,constraints.snap_xf;
 
-	return this->generatePolyMatrix(tf).lu().solve(b);
+	return A_inv * b;
 }
 
 TrajectorySegment TrajectoryGenerator::solveSegment(TrajectoryConstraints constraints, double tf)
@@ -54,9 +54,11 @@ TrajectorySegment TrajectoryGenerator::solveSegment(TrajectoryConstraints constr
 	TrajectorySegment seg;
 	seg.tf = tf;
 
-	seg.x = this->solvePoly(constraints.const_x, seg.tf);
-	seg.y = this->solvePoly(constraints.const_y, seg.tf);
-	seg.z = this->solvePoly(constraints.const_z, seg.tf);
+	Eigen::Matrix<double, 10, 10> A_inv = this->generatePolyMatrix(tf).lu().inverse();
+
+	seg.x = this->solvePoly(constraints.const_x, A_inv);
+	seg.y = this->solvePoly(constraints.const_y, A_inv);
+	seg.z = this->solvePoly(constraints.const_z, A_inv);
 
 	return seg;
 }
@@ -121,6 +123,7 @@ EfficientTrajectorySegment TrajectoryGenerator::preComputeTrajectorySegment(Traj
 
 /*
  * tests if trajectory segment is physically feasible for the quadrotor to perform
+ * evaluates from t0 to tf
  */
 bool TrajectoryGenerator::testSegmentForFeasibilityFAST(TrajectorySegment seg, PhysicalCharacterisics physical)
 {
@@ -152,7 +155,7 @@ bool TrajectoryGenerator::testSegmentForFeasibilityFAST(TrajectorySegment seg, P
 		return false; // the quad would need too much torque
 	}*/
 
-	for(double t = 0; t < seg.tf + FEASIBILITY_DT_FAST; t += FEASIBILITY_DT_FAST)
+	for(double t = seg.t0; t < seg.tf + FEASIBILITY_DT_FAST; t += FEASIBILITY_DT_FAST)
 	{
 		if(!checkForces(calculateMotorForces(eff_seg, physical, t), physical))
 		{
@@ -244,4 +247,9 @@ bool TrajectoryGenerator::checkForces(Eigen::Vector4d forces, PhysicalCharacteri
 	}
 
 	return true;
+}
+
+nav_msgs::Path generateTrajectorySegmentPath(TrajectorySegment seg)
+{
+
 }

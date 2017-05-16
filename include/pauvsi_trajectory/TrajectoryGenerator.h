@@ -14,6 +14,8 @@
 
 #include <eigen3/Eigen/Geometry>
 
+#include <nav_msgs/Path.h>
+
 #include "Types.h"
 #include "Polynomial.hpp"
 
@@ -23,8 +25,10 @@ public:
 	TrajectoryGenerator();
 	virtual ~TrajectoryGenerator();
 
+	Eigen::MatrixXd generateDynamicPolyMatrix(DynamicTrajectoryConstraints constraints);
+
 	Eigen::Matrix<double, 10, 10> generatePolyMatrix(double tf);
-	Polynomial solvePoly(PolynomialConstraints constraints, double tf);
+	Polynomial solvePoly(PolynomialConstraints constraints, Eigen::Matrix<double, 10, 10> A_inv);
 	TrajectorySegment solveSegment(TrajectoryConstraints constraints, double tf);
 
 	TrajectorySegment computeMinimumTimeTrajectorySegment(TrajectoryConstraints constraints, PhysicalCharacterisics physical, double tf_guess);
@@ -36,6 +40,10 @@ public:
 	EfficientTrajectorySegment preComputeTrajectorySegment(TrajectorySegment pos);
 
 	bool checkForces(Eigen::Vector4d forces, PhysicalCharacterisics& physical);
+
+	nav_msgs::Path generateTrajectorySegmentPath(TrajectorySegment seg);
+
+
 };
 
 #endif /* PAUVSI_M7_PAUVSI_TRAJECTORY_INCLUDE_PAUVSI_TRAJECTORY_TRAJECTORYGENERATOR_H_ */

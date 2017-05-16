@@ -20,9 +20,11 @@
 
 #define G 9.81
 
-#define TIME_OPTIM_ITER 7
+#define TIME_OPTIM_ITER 10
 #define MIN_SEGMENT_TIME 0
 #define MAX_SEGMENT_TIME 20
+
+#define DIST2DT_MULTIPLIER 1
 
 //NON TUNABLE
 
