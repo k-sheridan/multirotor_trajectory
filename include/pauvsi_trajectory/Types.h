@@ -37,6 +37,20 @@ struct Point{
 	}
 };
 
+struct GeometricConstraint{
+	enum Type {
+		PLANE_MIN,
+		PLANE_MAX
+	};
+
+	Type type;
+
+	double z_min;
+	double z_max;
+	double radius;
+
+};
+
 struct AdvancedWaypointConstraint{
 	Point pos;
 	Point vel;
@@ -44,6 +58,8 @@ struct AdvancedWaypointConstraint{
 	Point jerk;
 	Point snap;
 	double t;
+
+	std::vector<GeometricConstraint> geoConstraint; // constraint between this and the next waypoint
 };
 
 struct BasicWaypointConstraint{
@@ -55,11 +71,14 @@ struct BasicWaypointConstraint{
 		t = time;
 		pos = position;
 	}
+
+	std::vector<GeometricConstraint> geoConstraint; // constraint between this and the next waypoint
 };
 
 struct DynamicTrajectoryConstraints{
 	AdvancedWaypointConstraint start, end;
 	std::vector<BasicWaypointConstraint> middle; // contains the middle points
+
 };
 
 typedef Eigen::VectorXd Polynomial; // highest order coeff first
