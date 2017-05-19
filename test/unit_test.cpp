@@ -102,9 +102,9 @@ int main(int argc, char **argv)
 	phys.max_motor_thrust = 25;
 
 	phys.torqueTransition << 1, 1, 1, 1,
-							0.25, 0.25, -0.25, -0.25,
-							0.25, -0.25, -0.25, 0.25,
-							-0.01, 0.01, -0.01, 0.01;
+			0.25, 0.25, -0.25, -0.25,
+			0.25, -0.25, -0.25, 0.25,
+			-0.01, 0.01, -0.01, 0.01;
 
 	phys.torqueTransition_inv = phys.torqueTransition.inverse();
 
@@ -162,19 +162,52 @@ int main(int argc, char **argv)
 	dc.end.jerk = Point(0, 0, 0);
 	dc.end.snap = Point(0, 0, 0);
 
-	dc.middle.push_back(BasicWaypointConstraint(Point(5, 0, 0.5), 3));
-
 	Eigen::MatrixXd A = trajGen.generateDynamicPolyMatrix(dc);
 
 	ROS_INFO_STREAM(trajGen.generatePolyMatrix(6));
 	ROS_INFO_STREAM(A);
 
+	ROS_ASSERT(A == trajGen.generatePolyMatrix(6));
+
+	dc.start.t = 0;
+	dc.start.pos = Point(0, 0, 0.5);
+	dc.start.vel = Point(1, 1, 0);
+	dc.start.accel = Point(5, 0, 0);
+	dc.start.jerk = Point(0, 0, 0);
+	dc.start.snap = Point(0, 0, 0);
+
+	dc.end.t = 6;
+	dc.end.pos = Point(9, 0, 0.5);
+	dc.end.vel = Point(0, 0, 0);
+	dc.end.accel = Point(0, 0, 0);
+	dc.end.jerk = Point(0, 0, 0);
+	dc.end.snap = Point(0, 0, 0);
+
+	dc.middle.push_back(BasicWaypointConstraint(Point(4, 0, 2.5), 2));
+	dc.middle.push_back(BasicWaypointConstraint(Point(5, 0, 2.5), 3));
+	dc.middle.push_back(BasicWaypointConstraint(Point(6, 0, 2.5), 4));
+
+	A = trajGen.generateDynamicPolyMatrix(dc);
+
+	TrajectorySegment trajectory = trajGen.solveSegment(dc); // test the solution
+
 
 	ros::Publisher path_pub;
 	path_pub = nh.advertise<nav_msgs::Path>("currentTrajectory", 1);
 
+	nav_msgs::Path path = trajGen.generateTrajectorySegmentPath(trajectory);
 
+	ROS_DEBUG_STREAM("path points: " << path.poses.size());
 
+	path_pub.publish(path);
+
+	ros::Rate loop_rate(2);
+
+	while(ros::ok())
+	{
+		path_pub.publish(path);
+		loop_rate.sleep();
+	}
 
 	return 0;
 }

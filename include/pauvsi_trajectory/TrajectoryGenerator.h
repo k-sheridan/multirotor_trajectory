@@ -38,6 +38,8 @@ public:
 
 	Eigen::Vector4d calculateMotorForces(EfficientTrajectorySegment ts, PhysicalCharacterisics physical, double t);
 
+	Eigen::Quaterniond calculateRotation(TrajectorySegment accel, double t);
+
 	EfficientTrajectorySegment preComputeTrajectorySegment(TrajectorySegment pos);
 
 	bool checkForces(Eigen::Vector4d forces, PhysicalCharacterisics& physical);

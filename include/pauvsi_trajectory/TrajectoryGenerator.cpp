@@ -90,6 +90,77 @@ TrajectorySegment TrajectoryGenerator::solveSegment(DynamicTrajectoryConstraints
 	Eigen::MatrixXd A_inv = generateDynamicPolyMatrix(constraints).lu().inverse();
 
 	Eigen::VectorXd b(10 + constraints.middle.size(), 1);
+
+	int midPointCount = constraints.middle.size();
+
+	b(0) = constraints.start.pos.x;
+	b(1) = constraints.start.vel.x;
+	b(2) = constraints.start.accel.x;
+	b(3) = constraints.start.jerk.x;
+	b(4) = constraints.start.snap.x;
+
+	for(int i = 0; i < midPointCount; i++)
+	{
+		b(5 + i) = constraints.middle.at(i).pos.x;
+		ROS_DEBUG("ran midpoint");
+	}
+
+	b(5 + midPointCount) = constraints.end.pos.x;
+	b(6 + midPointCount) = constraints.end.vel.x;
+	b(7 + midPointCount) = constraints.end.accel.x;
+	b(8 + midPointCount) = constraints.end.jerk.x;
+	b(9 + midPointCount) = constraints.end.snap.x;
+
+	ROS_DEBUG_STREAM("b for x: " << b.transpose());
+
+	seg.x = A_inv * b; // solve for x poly
+
+	//-=-==-=-=-=-=-=-=-=-=-=-=-=-=
+	b(0) = constraints.start.pos.y;
+	b(1) = constraints.start.vel.y;
+	b(2) = constraints.start.accel.y;
+	b(3) = constraints.start.jerk.y;
+	b(4) = constraints.start.snap.y;
+
+	for(int i = 0; i < midPointCount; i++)
+	{
+		b(5 + i) = constraints.middle.at(i).pos.y;
+	}
+
+	b(5 + midPointCount) = constraints.end.pos.y;
+	b(6 + midPointCount) = constraints.end.vel.y;
+	b(7 + midPointCount) = constraints.end.accel.y;
+	b(8 + midPointCount) = constraints.end.jerk.y;
+	b(9 + midPointCount) = constraints.end.snap.y;
+
+	ROS_DEBUG_STREAM("b for y: " << b.transpose());
+
+	seg.y = A_inv * b; // solve for y poly
+
+
+	//-=-==-=-=-=-=-=-=-=-=-=-=-=-=
+	b(0) = constraints.start.pos.z;
+	b(1) = constraints.start.vel.z;
+	b(2) = constraints.start.accel.z;
+	b(3) = constraints.start.jerk.z;
+	b(4) = constraints.start.snap.z;
+
+	for(int i = 0; i < midPointCount; i++)
+	{
+		b(5 + i) = constraints.middle.at(i).pos.z;
+	}
+
+	b(5 + midPointCount) = constraints.end.pos.z;
+	b(6 + midPointCount) = constraints.end.vel.z;
+	b(7 + midPointCount) = constraints.end.accel.z;
+	b(8 + midPointCount) = constraints.end.jerk.z;
+	b(9 + midPointCount) = constraints.end.snap.z;
+
+	ROS_DEBUG_STREAM("b for z: " << b.transpose());
+
+	seg.z = A_inv * b; // solve for y poly
+
+	return seg;
 }
 
 Eigen::Matrix<double, 10, 10> TrajectoryGenerator::generatePolyMatrix(double tf)
@@ -305,6 +376,40 @@ Eigen::Vector4d TrajectoryGenerator::calculateMotorForces(EfficientTrajectorySeg
 }
 
 /*
+ * for visulization only
+ */
+Eigen::Quaterniond TrajectoryGenerator::calculateRotation(TrajectorySegment accel_poly, double t)
+{
+	Eigen::Vector3d accel;
+	accel << polyVal(accel_poly.x, t), polyVal(accel_poly.y, t), polyVal(accel_poly.z, t);
+
+	Eigen::Vector3d F_inertial = accel;
+	F_inertial(2) += G; // add the FORCE due to gravity
+
+	double f_total = F_inertial.norm(); // the total force required at max acceleration
+
+	Eigen::Vector3d F_inertial_bar = F_inertial / f_total; // should find the direction vector of f inertial
+
+	Eigen::Vector3d F_body_bar;
+	F_body_bar << 0, 0, 1;
+
+	double quatNorm = 1 / sqrt(2*(1 + F_inertial_bar.transpose() * F_body_bar));
+
+	Eigen::Quaterniond quat;
+
+	quat.w() = 1 + F_inertial_bar.transpose() * F_body_bar;
+
+	Eigen::Vector3d temp;
+	temp = F_inertial_bar.cross(F_body_bar);
+
+	quat.x() = -temp(0);
+	quat.y() = -temp(1);
+	quat.z() = -temp(2);
+
+	return quat;
+}
+
+/*
  * checks if forces are within bounds
  */
 bool TrajectoryGenerator::checkForces(Eigen::Vector4d forces, PhysicalCharacterisics& physical)
@@ -329,6 +434,12 @@ nav_msgs::Path TrajectoryGenerator::generateTrajectorySegmentPath(TrajectorySegm
 {
 	nav_msgs::Path path;
 
+	TrajectorySegment accel;
+
+	accel.x = polyDer(polyDer(seg.x));
+	accel.y = polyDer(polyDer(seg.y));
+	accel.z = polyDer(polyDer(seg.z));
+
 	for(double t = seg.t0; t < seg.tf; t += VISUALIZE_DT)
 	{
 		geometry_msgs::PoseStamped pose;
@@ -337,12 +448,19 @@ nav_msgs::Path TrajectoryGenerator::generateTrajectorySegmentPath(TrajectorySegm
 		pose.pose.position.y = polyVal(seg.y, t);
 		pose.pose.position.z = polyVal(seg.z, t);
 
+		Eigen::Quaterniond quat = this->calculateRotation(accel, t);
+
+		pose.pose.orientation.w = quat.w();
+		pose.pose.orientation.x = quat.x();
+		pose.pose.orientation.y = quat.y();
+		pose.pose.orientation.z = quat.z();
+
 		pose.header.stamp = ros::Time(t);
 
 		path.poses.push_back(pose);
 	}
 
-	path.header.frame_id = "world_frame";
+	path.header.frame_id = "world";
 
 	return path;
 }
