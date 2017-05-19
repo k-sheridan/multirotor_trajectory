@@ -26,6 +26,8 @@
 
 #define DIST2DT_MULTIPLIER 1
 
+#define VISUALIZE_DT 0.25
+
 //NON TUNABLE
 
 

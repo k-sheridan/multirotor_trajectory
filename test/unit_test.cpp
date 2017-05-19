@@ -170,6 +170,9 @@ int main(int argc, char **argv)
 	ROS_INFO_STREAM(A);
 
 
+	ros::Publisher path_pub;
+	path_pub = nh.advertise<nav_msgs::Path>("currentTrajectory", 1);
+
 
 
 

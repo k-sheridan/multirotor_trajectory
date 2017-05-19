@@ -81,6 +81,17 @@ Eigen::MatrixXd TrajectoryGenerator::generateDynamicPolyMatrix(DynamicTrajectory
 	return A;
 }
 
+TrajectorySegment TrajectoryGenerator::solveSegment(DynamicTrajectoryConstraints constraints)
+{
+	TrajectorySegment seg;
+	seg.t0 = constraints.start.t;
+	seg.tf = constraints.end.t;
+
+	Eigen::MatrixXd A_inv = generateDynamicPolyMatrix(constraints).lu().inverse();
+
+	Eigen::VectorXd b(10 + constraints.middle.size(), 1);
+}
+
 Eigen::Matrix<double, 10, 10> TrajectoryGenerator::generatePolyMatrix(double tf)
 {
 	double tf_2 = tf*tf;
@@ -314,7 +325,24 @@ bool TrajectoryGenerator::checkForces(Eigen::Vector4d forces, PhysicalCharacteri
 	return true;
 }
 
-nav_msgs::Path generateTrajectorySegmentPath(TrajectorySegment seg)
+nav_msgs::Path TrajectoryGenerator::generateTrajectorySegmentPath(TrajectorySegment seg)
 {
+	nav_msgs::Path path;
 
+	for(double t = seg.t0; t < seg.tf; t += VISUALIZE_DT)
+	{
+		geometry_msgs::PoseStamped pose;
+
+		pose.pose.position.x = polyVal(seg.x, t);
+		pose.pose.position.y = polyVal(seg.y, t);
+		pose.pose.position.z = polyVal(seg.z, t);
+
+		pose.header.stamp = ros::Time(t);
+
+		path.poses.push_back(pose);
+	}
+
+	path.header.frame_id = "world_frame";
+
+	return path;
 }

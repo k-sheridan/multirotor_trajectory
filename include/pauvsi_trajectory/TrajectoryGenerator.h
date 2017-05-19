@@ -26,6 +26,7 @@ public:
 	virtual ~TrajectoryGenerator();
 
 	Eigen::MatrixXd generateDynamicPolyMatrix(DynamicTrajectoryConstraints constraints);
+	TrajectorySegment solveSegment(DynamicTrajectoryConstraints constraints);
 
 	Eigen::Matrix<double, 10, 10> generatePolyMatrix(double tf);
 	Polynomial solvePoly(PolynomialConstraints constraints, Eigen::Matrix<double, 10, 10> A_inv);
