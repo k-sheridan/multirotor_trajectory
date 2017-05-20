@@ -42,13 +42,56 @@ TrajectorySegment TrajectoryGenerator::computeHighOrderMinimumTimeTrajectory(Dyn
 
 	seg = this->computeGeometricallyFeasibleTrajectory(constraints);
 
+	seg = this->minimizeTime(constraints, phys);
+
 
 	return seg;
 }
 
 TrajectorySegment TrajectoryGenerator::minimizeTime(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys)
 {
+	double d2dt_curr = DIST2DT_MULTIPLIER;
+	Eigen::VectorXd current_times = constraints.getTimes(); // stores the current best
+	Eigen::VectorXd test_times = current_times;
 
+	TrajectorySegment seg = solveSegment(constraints);
+
+	for(int i = 0; i < 1; i++)
+	{
+		double d2dt_high = DIST2Dt_MAX;
+		double d2dt_low = DIST2DT_MIN;
+		bool pass = true;
+
+		for(int j = 0; j < D2DT_TIME_OPTIM_ITER; j++)
+		{
+			pass = this->testSegmentForFeasibilityFAST(seg, phys);
+			if(pass)
+			{
+				d2dt_high = d2dt_curr;
+				d2dt_curr = d2dt_low + 0.5*(d2dt_curr - d2dt_low);
+			}
+			else
+			{
+				d2dt_low = d2dt_curr;
+				d2dt_curr = d2dt_high - 0.5*(d2dt_high - d2dt_curr);
+			}
+			ROS_DEBUG_STREAM("iter " << i+1 << " d2dt " << d2dt_curr);
+
+			if(j == D2DT_TIME_OPTIM_ITER - 1){
+				d2dt_curr = d2dt_high;
+				current_times = test_times;
+				break;
+			}
+			else{
+				test_times.segment(i, test_times.size()) = d2dt_curr * current_times.segment(i, current_times.size());
+				ROS_DEBUG_STREAM("testing times: " << test_times.transpose());
+				constraints.assignTimes(test_times);
+				seg = solveSegment(constraints);
+			}
+		}
+	}
+
+	return seg;
 }
 
 /*

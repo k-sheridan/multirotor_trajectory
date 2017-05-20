@@ -25,6 +25,9 @@
 #define MAX_SEGMENT_TIME 20
 
 #define DIST2DT_MULTIPLIER 0.7
+#define DIST2DT_MIN 0
+#define DIST2Dt_MAX 2
+#define D2DT_TIME_OPTIM_ITER 5
 
 #define ARCLENGTH_DT 0.25
 
