@@ -16,6 +16,114 @@ TrajectoryGenerator::~TrajectoryGenerator() {
 	// TODO Auto-generated destructor stub
 }
 
+TrajectorySegment TrajectoryGenerator::computeHighOrderMinimumTimeTrajectory(DynamicTrajectoryConstraints constraints, PhysicalCharacterisics phys)
+{
+	// compute initial guess for times
+	constraints.start.t = 0.0;
+	if(constraints.middle.size())
+	{
+		constraints.middle.front().t = ((constraints.middle.front().pos.toEigen() - constraints.start.pos.toEigen()).norm() * DIST2DT_MULTIPLIER);
+
+		for(int i = 1; i < constraints.middle.size(); i++)
+		{
+			constraints.middle[i].t = ((constraints.middle[i].pos.toEigen() - constraints.middle[i-1].pos.toEigen()).norm() * DIST2DT_MULTIPLIER) + constraints.middle[i-1].t;
+		}
+
+		constraints.end.t = ((constraints.end.pos.toEigen() - constraints.middle.back().pos.toEigen()).norm() * DIST2DT_MULTIPLIER) + constraints.middle.back().t;
+	}
+	else
+	{
+		constraints.end.t = (constraints.end.pos.toEigen() - constraints.middle.back().pos.toEigen()).norm() * DIST2DT_MULTIPLIER + constraints.middle.back().t;
+	}
+
+	TrajectorySegment seg = solveSegment(constraints);
+
+	return seg;
+}
+
+/*
+ * finds a geometrically feasible trajectory
+ * and updates the constraints by reference
+ */
+TrajectorySegment TrajectoryGenerator::computeGeometricallyFeasibleTrajectory(DynamicTrajectoryConstraints& constraints)
+{
+
+	bool fail = false;
+
+	TrajectorySegment seg = this->solveSegment(constraints);
+	fail = this->refineGeometricConstraints(seg, constraints);
+
+	while(fail)
+	{
+		seg = this->solveSegment(constraints);
+		fail = this->refineGeometricConstraints(seg, constraints);
+	}
+
+	return seg;
+}
+
+std::vector<BasicWaypointConstraint> TrajectoryGenerator::simplifyConstraints(DynamicTrajectoryConstraints constraints){
+	std::vector<BasicWaypointConstraint> simple;
+
+	simple.push_back(BasicWaypointConstraint(constraints.start.pos, constraints.start.t));
+	simple.back().geoConstraint = constraints.start.geoConstraint;
+	for(auto e : constraints.middle)
+	{
+		simple.push_back(e);
+	}
+	simple.push_back(BasicWaypointConstraint(constraints.end.pos, constraints.end.t));
+	simple.back().geoConstraint = constraints.end.geoConstraint;
+	return simple;
+}
+
+/*
+ * adds waypoints as necesary and returns whether it failed
+ */
+bool TrajectoryGenerator::refineGeometricConstraints(TrajectorySegment seg, DynamicTrajectoryConstraints& constraints)
+{
+
+}
+
+bool TrajectoryGenerator::testSegmentForGeometricFeasibility(TrajectorySegment seg, std::vector<GeometricConstraint> geoConstraints, double& failureTime)
+{
+	if(geoConstraints.size() == 0) // if this trajectory has no constraints it automatically passes
+	{
+		return true;
+	}
+
+	for(double t = seg.t0; t < seg.tf; t += FEASIBILITY_DT_FAST)
+	{
+		double z = polyVal(seg.z, t);
+
+		//ROS_DEBUG_STREAM("t = " << t);
+		//ROS_DEBUG_STREAM("z = " << z);
+
+		for(auto e : geoConstraints)
+		{
+			if(e.type == e.PLANE_MIN)
+			{
+				if(z < e.z_min)
+				{
+					failureTime = t;
+					ROS_DEBUG_STREAM("-failed at " << t);
+					return false;
+				}
+			}
+			else if(e.type == e.PLANE_MAX)
+			{
+				if(z > e.z_max)
+				{
+					failureTime = t;
+					ROS_DEBUG_STREAM("+failed at " << t);
+					return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
 //DYNAMIC POLYNOMIALS
 /*
  * ASSUMES: the start time is 0
@@ -463,4 +571,22 @@ nav_msgs::Path TrajectoryGenerator::generateTrajectorySegmentPath(TrajectorySegm
 	path.header.frame_id = "world";
 
 	return path;
+}
+
+/*
+ * this is the brute force approximate way
+ */
+double TrajectoryGenerator::arcLengthTrajectoryBRUTE(TrajectorySegment seg)
+{
+	TrajectorySegment vel = polyDer(seg);
+
+	double dist = 0;
+
+	for(double t = seg.t0; t < seg.tf; t += ARCLENGTH_DT)
+	{
+		//ROS_DEBUG_STREAM(t);
+		dist += polyVal(vel, t).norm() * ARCLENGTH_DT;
+	}
+
+	return dist;
 }

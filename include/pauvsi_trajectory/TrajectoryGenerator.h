@@ -27,6 +27,15 @@ public:
 
 	Eigen::MatrixXd generateDynamicPolyMatrix(DynamicTrajectoryConstraints constraints);
 	TrajectorySegment solveSegment(DynamicTrajectoryConstraints constraints);
+	TrajectorySegment computeHighOrderMinimumTimeTrajectory(DynamicTrajectoryConstraints constraints, PhysicalCharacterisics phys);
+
+	std::vector<BasicWaypointConstraint> simplifyConstraints(DynamicTrajectoryConstraints constraints);
+
+	bool refineGeometricConstraints(TrajectorySegment seg, DynamicTrajectoryConstraints& constraints);
+
+	TrajectorySegment computeGeometricallyFeasibleTrajectory(DynamicTrajectoryConstraints& constraints);
+
+	bool testSegmentForGeometricFeasibility(TrajectorySegment seg, std::vector<GeometricConstraint> geoConstraints, double& failureTime);
 
 	Eigen::Matrix<double, 10, 10> generatePolyMatrix(double tf);
 	Polynomial solvePoly(PolynomialConstraints constraints, Eigen::Matrix<double, 10, 10> A_inv);
@@ -39,6 +48,8 @@ public:
 	Eigen::Vector4d calculateMotorForces(EfficientTrajectorySegment ts, PhysicalCharacterisics physical, double t);
 
 	Eigen::Quaterniond calculateRotation(TrajectorySegment accel, double t);
+
+	double arcLengthTrajectoryBRUTE(TrajectorySegment seg);
 
 	EfficientTrajectorySegment preComputeTrajectorySegment(TrajectorySegment pos);
 

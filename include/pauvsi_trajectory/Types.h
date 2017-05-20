@@ -35,6 +35,20 @@ struct Point{
 		y = 0;
 		z = 0;
 	}
+
+	Point(Eigen::Vector3d vec)
+	{
+		x = vec(0);
+		y = vec(1);
+		z = vec(2);
+	}
+
+	Eigen::Vector3d toEigen()
+	{
+		Eigen::Vector3d vec;
+		vec << x, y, z;
+		return vec;
+	}
 };
 
 struct GeometricConstraint{

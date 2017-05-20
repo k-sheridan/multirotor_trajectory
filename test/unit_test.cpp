@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 			0, 0, 0.75;
 
 	phys.min_motor_thrust = 0.1;
-	phys.max_motor_thrust = 25;
+	phys.max_motor_thrust = 22;
 
 	phys.torqueTransition << 1, 1, 1, 1,
 			0.25, 0.25, -0.25, -0.25,
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 	dc.start.snap = Point(0, 0, 0);
 
 	dc.end.t = 6;
-	dc.end.pos = Point(10, 0, 0.5);
+	dc.end.pos = Point(0, 0, 0.5);
 	dc.end.vel = Point(0, 0, 0);
 	dc.end.accel = Point(0, 0, 0);
 	dc.end.jerk = Point(0, 0, 0);
@@ -169,27 +169,53 @@ int main(int argc, char **argv)
 
 	ROS_ASSERT(A == trajGen.generatePolyMatrix(6));
 
+
+	GeometricConstraint floor, ceil, obs;
+	floor.type = GeometricConstraint::PLANE_MIN;
+	floor.z_min = 0;
+	obs.type = GeometricConstraint::PLANE_MIN;
+	obs.z_min = 2;
+	ceil.type = GeometricConstraint::PLANE_MAX;
+	ceil.z_max = 3.0;
+
 	dc.start.t = 0;
 	dc.start.pos = Point(0, 0, 0.5);
-	dc.start.vel = Point(1, 1, 0);
-	dc.start.accel = Point(5, 0, 0);
+	dc.start.vel = Point(0, 0, 0);
+	dc.start.accel = Point(0, 0, 0);
 	dc.start.jerk = Point(0, 0, 0);
 	dc.start.snap = Point(0, 0, 0);
+	dc.start.geoConstraint.push_back(ceil);
+	dc.start.geoConstraint.push_back(floor);
 
-	dc.end.t = 6;
+
+	dc.end.t = 5;
 	dc.end.pos = Point(9, 0, 0.5);
 	dc.end.vel = Point(0, 0, 0);
 	dc.end.accel = Point(0, 0, 0);
 	dc.end.jerk = Point(0, 0, 0);
 	dc.end.snap = Point(0, 0, 0);
+	dc.end.geoConstraint.push_back(ceil);
+	dc.end.geoConstraint.push_back(floor);
 
-	dc.middle.push_back(BasicWaypointConstraint(Point(4, 0, 2.5), 2));
-	dc.middle.push_back(BasicWaypointConstraint(Point(5, 0, 2.5), 3));
-	dc.middle.push_back(BasicWaypointConstraint(Point(6, 0, 2.5), 4));
+
+	dc.middle.push_back(BasicWaypointConstraint(Point(2, 0, 2.5), 2));
+	dc.middle.back().geoConstraint.push_back(ceil);
+	dc.middle.back().geoConstraint.push_back(obs);
+
+	dc.middle.push_back(BasicWaypointConstraint(Point(4, 0, 2.5), 2.5));
+	dc.middle.back().geoConstraint.push_back(ceil);
+	dc.middle.back().geoConstraint.push_back(obs);
+
+
+	dc.middle.push_back(BasicWaypointConstraint(Point(6, 0, 2.5), 2.5));
+	dc.middle.back().geoConstraint.push_back(ceil);
+	dc.middle.back().geoConstraint.push_back(floor);
+
+	//dc.middle.push_back(BasicWaypointConstraint(Point(7, 0, 2.5), 4));
 
 	A = trajGen.generateDynamicPolyMatrix(dc);
 
-	TrajectorySegment trajectory = trajGen.solveSegment(dc); // test the solution
+	TrajectorySegment trajectory = trajGen.computeHighOrderMinimumTimeTrajectory(dc, phys);
 
 
 	ros::Publisher path_pub;
@@ -198,6 +224,12 @@ int main(int argc, char **argv)
 	nav_msgs::Path path = trajGen.generateTrajectorySegmentPath(trajectory);
 
 	ROS_DEBUG_STREAM("path points: " << path.poses.size());
+
+	ROS_DEBUG_STREAM(trajectory.t0 << " - " << trajectory.tf);
+
+	ROS_INFO_STREAM("path length: " << trajGen.arcLengthTrajectoryBRUTE(trajectory));
+
+	ROS_INFO_STREAM("feasible: " << trajGen.testSegmentForFeasibilityFAST(trajectory, phys));
 
 	path_pub.publish(path);
 
