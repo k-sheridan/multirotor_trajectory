@@ -174,12 +174,12 @@ int main(int argc, char **argv)
 	floor.type = GeometricConstraint::PLANE_MIN;
 	floor.z_min = 0;
 	obs.type = GeometricConstraint::PLANE_MIN;
-	obs.z_min = 2;
+	obs.z_min = 2.25;
 	ceil.type = GeometricConstraint::PLANE_MAX;
-	ceil.z_max = 3.0;
+	ceil.z_max = 3;
 
 	dc.start.t = 0;
-	dc.start.pos = Point(0, 0, 0.5);
+	dc.start.pos = Point(-9, -9, 0.5);
 	dc.start.vel = Point(0, 0, 0);
 	dc.start.accel = Point(0, 0, 0);
 	dc.start.jerk = Point(0, 0, 0);
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 
 
 	dc.end.t = 5;
-	dc.end.pos = Point(9, 0, 0.5);
+	dc.end.pos = Point(9, 9, 0.5);
 	dc.end.vel = Point(0, 0, 0);
 	dc.end.accel = Point(0, 0, 0);
 	dc.end.jerk = Point(0, 0, 0);
@@ -198,18 +198,27 @@ int main(int argc, char **argv)
 	dc.end.geoConstraint.push_back(floor);
 
 
-	dc.middle.push_back(BasicWaypointConstraint(Point(2, 0, 2.5), 2));
+	dc.middle.push_back(BasicWaypointConstraint(Point(2, 0, 2.5), 0));
 	dc.middle.back().geoConstraint.push_back(ceil);
 	dc.middle.back().geoConstraint.push_back(obs);
 
-	dc.middle.push_back(BasicWaypointConstraint(Point(4, 0, 2.5), 2.5));
+	/*dc.middle.push_back(BasicWaypointConstraint(Point(3, 5, 2.5), 0));
 	dc.middle.back().geoConstraint.push_back(ceil);
 	dc.middle.back().geoConstraint.push_back(obs);
 
+	dc.middle.push_back(BasicWaypointConstraint(Point(4, 0, 2.5), 0));
+	dc.middle.back().geoConstraint.push_back(ceil);
+	dc.middle.back().geoConstraint.push_back(obs);*/
 
-	dc.middle.push_back(BasicWaypointConstraint(Point(6, 0, 2.5), 2.5));
+
+	dc.middle.push_back(BasicWaypointConstraint(Point(-2, 0, 2.5), 0));
 	dc.middle.back().geoConstraint.push_back(ceil);
 	dc.middle.back().geoConstraint.push_back(floor);
+
+	//test time setting
+
+	ROS_ASSERT(dc.middle.at(0).t == dc.assignTimes(dc.getTimes())->middle.at(0).t);
+	ROS_INFO_STREAM("times: " << dc.getTimes());
 
 	//dc.middle.push_back(BasicWaypointConstraint(Point(7, 0, 2.5), 4));
 

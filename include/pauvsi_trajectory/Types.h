@@ -8,6 +8,7 @@
 #ifndef PAUVSI_TRAJECTORY_INCLUDE_PAUVSI_TRAJECTORY_TYPES_H_
 #define PAUVSI_TRAJECTORY_INCLUDE_PAUVSI_TRAJECTORY_TYPES_H_
 
+#include <ros/ros.h>
 
 struct PolynomialConstraints{
 	double x0, xf;
@@ -92,6 +93,35 @@ struct BasicWaypointConstraint{
 struct DynamicTrajectoryConstraints{
 	AdvancedWaypointConstraint start, end;
 	std::vector<BasicWaypointConstraint> middle; // contains the middle points
+
+	Eigen::VectorXd getTimes()
+	{
+		Eigen::VectorXd times(this->middle.size()+2);
+
+		times(0) = this->start.t;
+		times(times.size()-1) = this->end.t;
+		for(int i = 0; i < this->middle.size(); i++)
+		{
+			times(1+i) = this->middle[i].t;
+		}
+		return times;
+	}
+
+	DynamicTrajectoryConstraints* assignTimes(Eigen::VectorXd times)
+	{
+		ROS_ASSERT((times.size() - 2) == this->middle.size());
+
+		this->start.t = times(0);
+		this->end.t = times(times.size()-1);
+
+		for(int i = 0; i < this->middle.size(); i++)
+		{
+			this->middle[i].t = times(1+i);
+		}
+
+		return this;
+
+	}
 
 };
 

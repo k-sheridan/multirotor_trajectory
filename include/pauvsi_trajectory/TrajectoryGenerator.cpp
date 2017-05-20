@@ -36,9 +36,19 @@ TrajectorySegment TrajectoryGenerator::computeHighOrderMinimumTimeTrajectory(Dyn
 		constraints.end.t = (constraints.end.pos.toEigen() - constraints.middle.back().pos.toEigen()).norm() * DIST2DT_MULTIPLIER + constraints.middle.back().t;
 	}
 
+	ROS_DEBUG_STREAM("intial time guess: " << constraints.getTimes());
+
 	TrajectorySegment seg = solveSegment(constraints);
 
+	seg = this->computeGeometricallyFeasibleTrajectory(constraints);
+
+
 	return seg;
+}
+
+TrajectorySegment TrajectoryGenerator::minimizeTime(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys)
+{
+
 }
 
 /*
@@ -48,16 +58,24 @@ TrajectorySegment TrajectoryGenerator::computeHighOrderMinimumTimeTrajectory(Dyn
 TrajectorySegment TrajectoryGenerator::computeGeometricallyFeasibleTrajectory(DynamicTrajectoryConstraints& constraints)
 {
 
-	bool fail = false;
+	bool pass = true;
 
 	TrajectorySegment seg = this->solveSegment(constraints);
-	fail = this->refineGeometricConstraints(seg, constraints);
+	pass = this->refineGeometricConstraints(seg, constraints);
+	if(pass)
+		return seg;
 
-	while(fail)
+
+	for(int i = 1; i < MAX_GEOM_REFINE_ITER; i++)
 	{
 		seg = this->solveSegment(constraints);
-		fail = this->refineGeometricConstraints(seg, constraints);
+		pass = this->refineGeometricConstraints(seg, constraints);
+		if(pass)
+			break;
 	}
+
+	if(!pass)
+		ROS_ERROR("TRAJECTORY MAY BE DANGEROUS!!!!!!!");
 
 	return seg;
 }
@@ -77,11 +95,92 @@ std::vector<BasicWaypointConstraint> TrajectoryGenerator::simplifyConstraints(Dy
 }
 
 /*
- * adds waypoints as necesary and returns whether it failed
+ * adds waypoints as necesary and returns whether it passed
  */
 bool TrajectoryGenerator::refineGeometricConstraints(TrajectorySegment seg, DynamicTrajectoryConstraints& constraints)
 {
+	double t_fail = 0;
+	bool pass = true;
+	if(constraints.middle.size())
+	{
+		std::vector<BasicWaypointConstraint> new_middle;
 
+
+		//set the test time
+		seg.t0 = constraints.start.t;
+		seg.tf = constraints.middle.at(0).t;
+		ROS_DEBUG_STREAM("bounds: " << seg.t0 << " => " << seg.tf);
+		if(!this->testSegmentForGeometricFeasibility(seg, constraints.start.geoConstraint, t_fail))
+		{
+			Point pt = Point(constraints.start.pos.toEigen() + 0.5 * (constraints.middle.at(0).pos.toEigen() - constraints.start.pos.toEigen()));
+			double t = constraints.start.t + 0.5 * (constraints.middle.at(0).t - constraints.start.t);
+			new_middle.push_back(BasicWaypointConstraint(pt, t));
+			new_middle.back().geoConstraint = constraints.start.geoConstraint;
+
+			ROS_DEBUG_STREAM("added pt: " << pt.toEigen().transpose() << " at t = " << t);
+
+			pass = false;
+		}
+		new_middle.push_back(constraints.middle.at(0));
+
+		for(int i = 0; i < (constraints.middle.size() - 1); i++)
+		{
+			//set the test time
+			seg.t0 = constraints.middle.at(i).t;
+			seg.tf = constraints.middle.at(i+1).t;
+			ROS_DEBUG_STREAM("bounds: " << seg.t0 << " => " << seg.tf);
+			if(!this->testSegmentForGeometricFeasibility(seg, constraints.middle.at(i).geoConstraint, t_fail))
+			{
+				Point pt = Point(constraints.middle.at(i).pos.toEigen() + 0.5 * (constraints.middle.at(i+1).pos.toEigen() - constraints.middle.at(i).pos.toEigen()));
+				double t = constraints.middle.at(i).t + 0.5 * (constraints.middle.at(i+1).t - constraints.middle.at(i).t);
+				new_middle.push_back(BasicWaypointConstraint(pt, t));
+				new_middle.back().geoConstraint = constraints.middle.at(i).geoConstraint;
+
+				ROS_DEBUG_STREAM("added pt: " << pt.toEigen().transpose() << " at t = " << t);
+
+				pass = false;
+			}
+			new_middle.push_back(constraints.middle.at(i+1));
+		}
+
+		//set the test time
+		seg.t0 = constraints.middle.back().t;
+		seg.tf = constraints.end.t;
+		ROS_DEBUG_STREAM("bounds: " << seg.t0 << " => " << seg.tf);
+		if(!this->testSegmentForGeometricFeasibility(seg, constraints.middle.back().geoConstraint, t_fail))
+		{
+			Point pt = Point(constraints.middle.back().pos.toEigen() + 0.5 * (constraints.end.pos.toEigen() - constraints.middle.back().pos.toEigen()));
+			double t = constraints.middle.back().t + 0.5 * (constraints.end.t - constraints.middle.back().t);
+			constraints.middle.push_back(BasicWaypointConstraint(pt, t));
+			new_middle.back().geoConstraint = constraints.middle.back().geoConstraint;
+
+			ROS_DEBUG_STREAM("added pt: " << pt.toEigen().transpose() << " at t = " << t);
+
+			pass = false;
+		}
+
+		constraints.middle = new_middle;
+	}
+	else
+	{
+		//set the test time
+		seg.t0 = constraints.start.t;
+		seg.tf = constraints.end.t;
+		ROS_DEBUG_STREAM("bounds: " << seg.t0 << " => " << seg.tf);
+		if(!this->testSegmentForGeometricFeasibility(seg, constraints.start.geoConstraint, t_fail))
+		{
+			Point pt = Point(constraints.start.pos.toEigen() + 0.5 * (constraints.end.pos.toEigen() - constraints.start.pos.toEigen()));
+			double t = constraints.start.t + 0.5 * (constraints.end.t - constraints.start.t);
+			constraints.middle.push_back(BasicWaypointConstraint(pt, t));
+			constraints.middle.back().geoConstraint = constraints.start.geoConstraint;
+
+			ROS_DEBUG_STREAM("added pt: " << pt.toEigen().transpose() << " at t = " << t);
+
+			pass = false;
+		}
+	}
+
+	return pass;
 }
 
 bool TrajectoryGenerator::testSegmentForGeometricFeasibility(TrajectorySegment seg, std::vector<GeometricConstraint> geoConstraints, double& failureTime)
@@ -152,7 +251,7 @@ Eigen::MatrixXd TrajectoryGenerator::generateDynamicPolyMatrix(DynamicTrajectory
 		double t_pow = 1;
 		for(int j = 0; j < dim; j++)
 		{
-			ROS_DEBUG_STREAM("addressing: " << 5 + i << ", " << dim - 1 - j);
+			//ROS_DEBUG_STREAM("addressing: " << 5 + i << ", " << dim - 1 - j);
 			A(5 + i, dim - j - 1) = t_pow;
 			t_pow *= t_const; // increase power of t_pow
 		}
@@ -172,7 +271,7 @@ Eigen::MatrixXd TrajectoryGenerator::generateDynamicPolyMatrix(DynamicTrajectory
 	{
 		for(int j = 0; j < dim; j++)
 		{
-			ROS_DEBUG_STREAM("addressing: " << 5 + i + midPointCount << ", " << j);
+			//ROS_DEBUG_STREAM("addressing: " << 5 + i + midPointCount << ", " << j);
 			if(i + j >= dim)
 			{
 				A(i + 5 + midPointCount, j) = 0;

@@ -29,11 +29,14 @@ public:
 	TrajectorySegment solveSegment(DynamicTrajectoryConstraints constraints);
 	TrajectorySegment computeHighOrderMinimumTimeTrajectory(DynamicTrajectoryConstraints constraints, PhysicalCharacterisics phys);
 
+	TrajectorySegment minimizeTime(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys);
+
 	std::vector<BasicWaypointConstraint> simplifyConstraints(DynamicTrajectoryConstraints constraints);
 
 	bool refineGeometricConstraints(TrajectorySegment seg, DynamicTrajectoryConstraints& constraints);
 
 	TrajectorySegment computeGeometricallyFeasibleTrajectory(DynamicTrajectoryConstraints& constraints);
+
 
 	bool testSegmentForGeometricFeasibility(TrajectorySegment seg, std::vector<GeometricConstraint> geoConstraints, double& failureTime);
 
