@@ -29,7 +29,8 @@ public:
 	TrajectorySegment solveSegment(DynamicTrajectoryConstraints constraints);
 	TrajectorySegment computeHighOrderMinimumTimeTrajectory(DynamicTrajectoryConstraints constraints, PhysicalCharacterisics phys);
 
-	TrajectorySegment minimizeTime(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys);
+	TrajectorySegment minimizeTimeFAST(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys);
+	TrajectorySegment minimizeTimeACCURATE(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys);
 
 	std::vector<BasicWaypointConstraint> simplifyConstraints(DynamicTrajectoryConstraints constraints);
 

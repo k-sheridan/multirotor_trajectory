@@ -42,13 +42,18 @@ TrajectorySegment TrajectoryGenerator::computeHighOrderMinimumTimeTrajectory(Dyn
 
 	seg = this->computeGeometricallyFeasibleTrajectory(constraints);
 
-	seg = this->minimizeTime(constraints, phys);
+	seg = this->minimizeTimeFAST(constraints, phys);
+
+	if(DT_OPTIM_ACCURATE)
+	{
+		seg = this->minimizeTimeACCURATE(constraints, phys);
+	}
 
 
 	return seg;
 }
 
-TrajectorySegment TrajectoryGenerator::minimizeTime(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys)
+TrajectorySegment TrajectoryGenerator::minimizeTimeFAST(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys)
 {
 	double d2dt_curr = DIST2DT_MULTIPLIER;
 	Eigen::VectorXd current_times = constraints.getTimes(); // stores the current best
@@ -59,10 +64,10 @@ TrajectorySegment TrajectoryGenerator::minimizeTime(DynamicTrajectoryConstraints
 
 	// if not fast optimize each segment instead of whole path
 	int level = 1;
-	if(!D2DT_OPTIM_FAST)
+	/*if(!D2DT_OPTIM_FAST)
 	{
 		level = current_times.size() - 1;
-	}
+	}*/
 
 	ROS_DEBUG_STREAM("times size: " << current_times.size());
 
@@ -102,6 +107,81 @@ TrajectorySegment TrajectoryGenerator::minimizeTime(DynamicTrajectoryConstraints
 			}
 			else{
 				test_times.segment(i, test_times.size()-i) = d2dt_curr * current_times.segment(i, current_times.size()-i);
+				ROS_DEBUG_STREAM("testing times: " << test_times.transpose());
+				constraints.assignTimes(test_times);
+				seg = solveSegment(constraints);
+			}
+		}
+	}
+
+	return seg;
+}
+
+/*
+ * expects that the starting constraints work
+ */
+TrajectorySegment TrajectoryGenerator::minimizeTimeACCURATE(DynamicTrajectoryConstraints& constraints, PhysicalCharacterisics phys)
+{
+	double dt_curr = 0;
+	Eigen::VectorXd current_times = constraints.getTimes(); // stores the current best
+	Eigen::VectorXd test_times = current_times;
+
+	TrajectorySegment seg, last_working_seg;
+	seg = solveSegment(constraints);
+
+
+
+	//ROS_DEBUG_STREAM("times size: " << current_times.size());
+
+	for(int i = 1; i < current_times.size(); i++)
+	{
+		dt_curr = 0;
+		double dt_high = ACCURATE_DT_HIGH;
+		double dt_low = ACCURATE_DT_LOW;
+		if(current_times(i-1)-current_times(i) < dt_low)
+		{
+			ROS_DEBUG_STREAM("CORRECTING");
+			dt_low = current_times(i-1)-current_times(i);
+		}
+
+		bool pass = true;
+
+		for(int j = 0; j < ACCURATE_TIME_OPTIM_ITERS; j++)
+		{
+			pass = this->testSegmentForFeasibilityFAST(seg, phys);
+
+			if(j == 0 && !pass)
+			{
+				ROS_ERROR_STREAM("ACCURATE DT OPTIM FAILED AT SEGMENT " << i << " DT STARTED IN A FAILING STATE");
+			}
+
+			if(pass)
+			{
+				dt_high = dt_curr;
+				dt_curr = dt_low + 0.5*(dt_curr - dt_low);
+				last_working_seg = seg;
+			}
+			else
+			{
+				dt_low = dt_curr;
+				dt_curr = dt_high - 0.5*(dt_high - dt_curr);
+			}
+			ROS_DEBUG_STREAM("iter " << j+1 << " dt " << dt_curr);
+
+			//ROS_DEBUG_STREAM("times size: " << current_times.size());
+			//ROS_DEBUG_STREAM("test times size: " << test_times.size());
+			if(j == ACCURATE_TIME_OPTIM_ITERS - 1){
+				dt_curr = dt_high;
+				test_times.segment(i, test_times.size()-i) = dt_curr * Eigen::VectorXd::Ones(current_times.size()-i) + current_times.segment(i, current_times.size()-i);
+				current_times = test_times;
+
+				ROS_DEBUG_STREAM("using: " << dt_curr);
+				seg = last_working_seg;
+				constraints.assignTimes(current_times);
+				break;
+			}
+			else{
+				test_times.segment(i, test_times.size()-i) = dt_curr * Eigen::VectorXd::Ones(current_times.size()-i) + current_times.segment(i, current_times.size()-i);
 				ROS_DEBUG_STREAM("testing times: " << test_times.transpose());
 				constraints.assignTimes(test_times);
 				seg = solveSegment(constraints);
@@ -295,7 +375,7 @@ Eigen::MatrixXd TrajectoryGenerator::generateDynamicPolyMatrix(DynamicTrajectory
 	int midPointCount = constraints.middle.size();
 	int dim = 10 + midPointCount; // the two endpoints make 10 degrees and then each middle way point adds another
 
-	ROS_DEBUG_STREAM("dynamic matrix size is " << dim);
+	//ROS_DEBUG_STREAM("dynamic matrix size is " << dim);
 
 	Eigen::MatrixXd A = Eigen::MatrixXd::Zero(dim, dim); // creates the dim X dim mat
 
@@ -370,7 +450,7 @@ TrajectorySegment TrajectoryGenerator::solveSegment(DynamicTrajectoryConstraints
 	for(int i = 0; i < midPointCount; i++)
 	{
 		b(5 + i) = constraints.middle.at(i).pos.x;
-		ROS_DEBUG("ran midpoint");
+		//ROS_DEBUG("ran midpoint");
 	}
 
 	b(5 + midPointCount) = constraints.end.pos.x;
@@ -379,7 +459,7 @@ TrajectorySegment TrajectoryGenerator::solveSegment(DynamicTrajectoryConstraints
 	b(8 + midPointCount) = constraints.end.jerk.x;
 	b(9 + midPointCount) = constraints.end.snap.x;
 
-	ROS_DEBUG_STREAM("b for x: " << b.transpose());
+	//ROS_DEBUG_STREAM("b for x: " << b.transpose());
 
 	seg.x = A_inv * b; // solve for x poly
 
@@ -401,7 +481,7 @@ TrajectorySegment TrajectoryGenerator::solveSegment(DynamicTrajectoryConstraints
 	b(8 + midPointCount) = constraints.end.jerk.y;
 	b(9 + midPointCount) = constraints.end.snap.y;
 
-	ROS_DEBUG_STREAM("b for y: " << b.transpose());
+	//ROS_DEBUG_STREAM("b for y: " << b.transpose());
 
 	seg.y = A_inv * b; // solve for y poly
 
@@ -424,7 +504,7 @@ TrajectorySegment TrajectoryGenerator::solveSegment(DynamicTrajectoryConstraints
 	b(8 + midPointCount) = constraints.end.jerk.z;
 	b(9 + midPointCount) = constraints.end.snap.z;
 
-	ROS_DEBUG_STREAM("b for z: " << b.transpose());
+	//ROS_DEBUG_STREAM("b for z: " << b.transpose());
 
 	seg.z = A_inv * b; // solve for y poly
 

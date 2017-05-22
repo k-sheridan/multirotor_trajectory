@@ -29,7 +29,10 @@
 #define DIST2Dt_MAX 2
 #define D2DT_TIME_OPTIM_ITER 5
 
-#define D2DT_OPTIM_FAST false
+#define DT_OPTIM_ACCURATE false
+#define ACCURATE_TIME_OPTIM_ITERS 10
+#define ACCURATE_DT_LOW -2
+#define ACCURATE_DT_HIGH 2
 
 #define ARCLENGTH_DT 0.25
 
