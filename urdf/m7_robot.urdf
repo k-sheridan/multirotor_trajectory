@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<robot name="pauvsi_m7_robot">
+	<link name="base_link">
+		<visual>
+			<geometry>
+				<box size="0.2 0.2 0.1"/>
+			</geometry>
+			<material name="gray">
+				<color rgba="0.5 0.5 0.5 1" />
+			</material>
+		</visual>
+	</link>
+	
+	<!-- ARMS -->
+	
+	<link name="arm1_link">
+		<visual>
+			<geometry>
+				<cylinder length="0.334" radius="0.036"/>
+			</geometry>
+			<material name="white">
+				<color rgba="0.9 0.9 0.9 1" />
+			</material>
+			<origin rpy="0 1.57075 0.7853981" xyz="0 0 0"/>
+		</visual>
+	</link>
+	
+	<joint name="base_to_arm1" type="fixed">
+		<parent link="base_link"/>
+		<child link="arm1_link"/>
+		<origin xyz="0.18 0.18 0"/>
+	</joint>
+	
+	<link name="arm2_link">
+		<visual>
+			<geometry>
+				<cylinder length="0.334" radius="0.036"/>
+			</geometry>
+			<material name="red">
+				<color rgba="0.8 0 0 1" />
+			</material>
+			<origin rpy="0 1.57075 2.3561481" xyz="0 0 0"/>
+		</visual>
+	</link>
+	
+	<joint name="base_to_arm2" type="fixed">
+		<parent link="base_link"/>
+		<child link="arm2_link"/>
+		<origin xyz="0.18 -0.18 0"/>
+	</joint>
+	
+	<link name="arm3_link">
+		<visual>
+			<geometry>
+				<cylinder length="0.334" radius="0.036"/>
+			</geometry>
+			<material name="red">
+				<color rgba="0.8 0 0 1" />
+			</material>
+			<origin rpy="0 1.57075 -2.3561481" xyz="0 0 0"/>
+		</visual>
+	</link>
+	
+	<joint name="base_to_arm3" type="fixed">
+		<parent link="base_link"/>
+		<child link="arm3_link"/>
+		<origin xyz="-0.18 -0.18 0"/>
+	</joint>
+	
+	<link name="arm4_link">
+		<visual>
+			<geometry>
+				<cylinder length="0.334" radius="0.036"/>
+			</geometry>
+			<material name="white">
+				<color rgba="0.9 0.9 0.9 1" />
+			</material>
+			<origin rpy="0 1.57075 2.3561481" xyz="0 0 0"/>
+		</visual>
+	</link>
+	
+	<joint name="base_to_arm4" type="fixed">
+		<parent link="base_link"/>
+		<child link="arm4_link"/>
+		<origin xyz="-0.18 0.18 0"/>
+	</joint>
+	
+	<!-- MOTORS -->
+	
+	<link name="motor1_link">
+		<visual>
+			<geometry>
+				<cylinder length="0.01" radius="0.2286" />
+			</geometry>
+			<material name="transGray">
+				<color rgba="0.5 0.5 0.5 0.5" />
+			</material>
+		</visual>
+	</link>
+	<joint name="motor1_to_arm1" type="fixed" >
+		<parent link="arm1_link"/>
+		<child link="motor1_link"/>
+		<origin xyz="0.13 0.13 0.06"/>
+	</joint>
+	
+	<link name="motor2_link">
+		<visual>
+			<geometry>
+				<cylinder length="0.01" radius="0.2286" />
+			</geometry>
+			<material name="transGray">
+				<color rgba="0.5 0.5 0.5 0.5" />
+			</material>
+		</visual>
+	</link>
+	<joint name="motor2_to_arm2" type="fixed" >
+		<parent link="arm2_link"/>
+		<child link="motor2_link"/>
+		<origin xyz="0.13 -0.13 0.06"/>
+	</joint>
+	
+	<link name="motor3_link">
+		<visual>
+			<geometry>
+				<cylinder length="0.01" radius="0.2286" />
+			</geometry>
+			<material name="transGray">
+				<color rgba="0.5 0.5 0.5 0.5" />
+			</material>
+		</visual>
+	</link>
+	<joint name="motor3_to_arm3" type="fixed" >
+		<parent link="arm3_link"/>
+		<child link="motor3_link"/>
+		<origin xyz="-0.13 -0.13 0.06"/>
+	</joint>
+	
+	<link name="motor4_link">
+		<visual>
+			<geometry>
+				<cylinder length="0.01" radius="0.2286" />
+			</geometry>
+			<material name="transGray">
+				<color rgba="0.5 0.5 0.5 0.5" />
+			</material>
+		</visual>
+	</link>
+	<joint name="motor4_to_arm4" type="fixed" >
+		<parent link="arm4_link"/>
+		<child link="motor4_link"/>
+		<origin xyz="-0.13 0.13 0.06"/>
+	</joint>
+	
+</robot>

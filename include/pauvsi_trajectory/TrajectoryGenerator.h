@@ -18,6 +18,7 @@
 
 #include "Types.h"
 #include "Polynomial.hpp"
+#include "Physics.h"
 
 
 class TrajectoryGenerator {

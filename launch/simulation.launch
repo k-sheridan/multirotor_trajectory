@@ -1,0 +1,14 @@
+
+<launch>
+	
+	<param name="m7_description" command="cat $(find pauvsi_trajectory)/urdf/m7_robot.urdf" />
+
+	<node pkg="robot_state_publisher" type="robot_state_publisher" name="m7_state_pub" >
+      <remap from="robot_description" to="m7_description" />
+      <remap from="joint_states" to="/arm/jointStates" />
+    </node>
+    
+    <!--<node name="rviz" pkg="rviz" type="rviz" />-->
+    
+    <node pkg="pauvsi_trajectory" type="virtual_flight_controller" name="flight_controller" />
+</launch>

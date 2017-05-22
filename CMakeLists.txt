@@ -13,14 +13,18 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   message_generation
   dynamic_reconfigure
+  tf
 )
 
 find_package(Eigen3 REQUIRED)
+
+find_package(Boost)
 
 include_directories(
 	include
 	${Eigen_INCLUDE_DIRS}
 	${catkin_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
 )
 
 # add the service files
@@ -61,5 +65,8 @@ add_dependencies(trajectory_server ${PROJECT_NAME}_generate_messages_cpp)
 
 add_executable(unit_test test/unit_test.cpp)
 target_link_libraries(unit_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} trajGen polynomial)
+
+add_executable(virtual_flight_controller src/virtual-flight-controller.cpp)
+target_link_libraries(virtual_flight_controller ${catkin_LIBRARIES} ${Eigen_LIBRARIES} ${Boost_LIBRARIES} trajGen polynomial)
 
 

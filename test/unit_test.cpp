@@ -9,6 +9,8 @@
 #include "../include/pauvsi_trajectory/Polynomial.hpp"
 #include "../include/pauvsi_trajectory/TrajectoryGenerator.h"
 
+#include "../include/pauvsi_trajectory/Physics.h"
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "pauvsi_trajectory_test", ros::init_options::AnonymousName); // initializes with a randomish name
@@ -93,13 +95,11 @@ int main(int argc, char **argv)
 	//trajectory
 
 	PhysicalCharacterisics phys;
-	phys.mass = 5;
-	phys.J << 0.75, 0, 0,
-			0, 0.75, 0,
-			0, 0, 0.75;
+	phys.mass = MASS;
+	phys.J << J_MATRIX;
 
-	phys.min_motor_thrust = 0.1;
-	phys.max_motor_thrust = 22;
+	phys.min_motor_thrust = MOTOR_FORCE_MIN;
+	phys.max_motor_thrust = MOTOR_FORCE_MAX;
 
 	phys.torqueTransition << TORQUE_TRANSITION;
 	phys.torqueTransition_inv = phys.torqueTransition.inverse();
