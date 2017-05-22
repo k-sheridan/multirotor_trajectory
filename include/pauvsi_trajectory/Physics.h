@@ -11,7 +11,7 @@
 
 //this is the 4x4 matrix which relates torque to motor forces
 // use meters
-#define TORQUE_TRANSITION 1, 1, 1, 1, 0.25, 0.25, -0.25, -0.25, 0.25, -0.25, -0.25, 0.25, -0.01, 0.01, -0.01, 0.01
+#define TORQUE_TRANSITION 1, 1, 1, 1, -0.25, -0.25, 0.25, 0.25, -0.25, 0.25, 0.25, -0.25, -0.01, 0.01, -0.01, 0.01
 
 // these are the max and min individual motor forces.
 // you can tune the aggression of the quad using the max in Newtons
