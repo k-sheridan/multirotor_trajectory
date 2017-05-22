@@ -54,9 +54,19 @@ TrajectorySegment TrajectoryGenerator::minimizeTime(DynamicTrajectoryConstraints
 	Eigen::VectorXd current_times = constraints.getTimes(); // stores the current best
 	Eigen::VectorXd test_times = current_times;
 
-	TrajectorySegment seg = solveSegment(constraints);
+	TrajectorySegment seg, last_working_seg;
+	seg = solveSegment(constraints);
 
-	for(int i = 0; i < 1; i++)
+	// if not fast optimize each segment instead of whole path
+	int level = 1;
+	if(!D2DT_OPTIM_FAST)
+	{
+		level = current_times.size() - 1;
+	}
+
+	ROS_DEBUG_STREAM("times size: " << current_times.size());
+
+	for(int i = 0; i < level; i++)
 	{
 		double d2dt_high = DIST2Dt_MAX;
 		double d2dt_low = DIST2DT_MIN;
@@ -69,21 +79,29 @@ TrajectorySegment TrajectoryGenerator::minimizeTime(DynamicTrajectoryConstraints
 			{
 				d2dt_high = d2dt_curr;
 				d2dt_curr = d2dt_low + 0.5*(d2dt_curr - d2dt_low);
+				last_working_seg = seg;
 			}
 			else
 			{
 				d2dt_low = d2dt_curr;
 				d2dt_curr = d2dt_high - 0.5*(d2dt_high - d2dt_curr);
 			}
-			ROS_DEBUG_STREAM("iter " << i+1 << " d2dt " << d2dt_curr);
+			ROS_DEBUG_STREAM("iter " << j+1 << " d2dt " << d2dt_curr);
 
+			ROS_DEBUG_STREAM("times size: " << current_times.size());
+			ROS_DEBUG_STREAM("test times size: " << test_times.size());
 			if(j == D2DT_TIME_OPTIM_ITER - 1){
 				d2dt_curr = d2dt_high;
+				test_times.segment(i, test_times.size()-i) = d2dt_curr * current_times.segment(i, current_times.size()-i);
 				current_times = test_times;
+
+				ROS_DEBUG_STREAM("using: " << d2dt_curr);
+				seg = last_working_seg;
+				constraints.assignTimes(current_times);
 				break;
 			}
 			else{
-				test_times.segment(i, test_times.size()) = d2dt_curr * current_times.segment(i, current_times.size());
+				test_times.segment(i, test_times.size()-i) = d2dt_curr * current_times.segment(i, current_times.size()-i);
 				ROS_DEBUG_STREAM("testing times: " << test_times.transpose());
 				constraints.assignTimes(test_times);
 				seg = solveSegment(constraints);

@@ -101,11 +101,7 @@ int main(int argc, char **argv)
 	phys.min_motor_thrust = 0.1;
 	phys.max_motor_thrust = 22;
 
-	phys.torqueTransition << 1, 1, 1, 1,
-			0.25, 0.25, -0.25, -0.25,
-			0.25, -0.25, -0.25, 0.25,
-			-0.01, 0.01, -0.01, 0.01;
-
+	phys.torqueTransition << TORQUE_TRANSITION;
 	phys.torqueTransition_inv = phys.torqueTransition.inverse();
 
 	PolynomialConstraints c;
@@ -198,7 +194,7 @@ int main(int argc, char **argv)
 	dc.end.geoConstraint.push_back(floor);
 
 
-	dc.middle.push_back(BasicWaypointConstraint(Point(2, 0, 2.5), 0));
+	dc.middle.push_back(BasicWaypointConstraint(Point(-7, -7, 2.5), 0));
 	dc.middle.back().geoConstraint.push_back(ceil);
 	dc.middle.back().geoConstraint.push_back(obs);
 
@@ -211,7 +207,7 @@ int main(int argc, char **argv)
 	dc.middle.back().geoConstraint.push_back(obs);*/
 
 
-	dc.middle.push_back(BasicWaypointConstraint(Point(-2, 0, 2.5), 0));
+	dc.middle.push_back(BasicWaypointConstraint(Point(7, 7, 2.5), 0));
 	dc.middle.back().geoConstraint.push_back(ceil);
 	dc.middle.back().geoConstraint.push_back(floor);
 
