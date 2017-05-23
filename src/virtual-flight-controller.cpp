@@ -78,10 +78,10 @@ int main(int argc, char **argv)
 	attitude.y() = 0.0;
 	attitude.z() = 0.0;
 
-	//testing
+	/*//testing
 	forces << 12.5, 12.5, 12.8, 12.5;
-	started = true;
-
+	started = true;*/
+	/*
 	ros::Rate loop_rate(1/PHYSICS_UPDATE_DT);
 	while(ros::ok())
 	{
@@ -89,7 +89,9 @@ int main(int argc, char **argv)
 		publishState();
 		ros::spinOnce();
 		loop_rate.sleep();
-	}
+	}*/
+
+	ros::spin();
 
 	return 0;
 }
@@ -178,6 +180,9 @@ void updateForces(const std_msgs::Float64MultiArrayConstPtr msg){
 	forces(2) = msg->data[2];
 	forces(3) = msg->data[3];
 	started = true;
+
+	physicsUpdate(0.01);
+	publishState();
 }
 
 void physicsUpdate(double dt)
@@ -193,11 +198,11 @@ void physicsUpdate(double dt)
 
 	ROS_DEBUG_STREAM("total force: " << torque_force(0));
 
-	Eigen::Vector3d accel = (1/mass)*(attitude * F_b) - gravity;
+	Eigen::Vector3d accel = (1.0/mass)*(attitude * F_b) - gravity;
 
 	Eigen::Vector3d alpha = J.inverse() * (moment - omega.cross(J*omega));
 
-	Eigen::Vector3d theta = 0.5 * alpha * dt*dt + omega * dt;
+	Eigen::Vector3d theta = (0.5 * alpha * dt*dt + omega * dt);
 
 	omega = omega + alpha * dt;
 
@@ -210,6 +215,8 @@ void physicsUpdate(double dt)
 	pos = 0.5 * accel * dt * dt + vel * dt + pos;
 
 	vel = vel + accel * dt;
+
+	ROS_INFO_STREAM("actual accel: " << accel.transpose());
 
 }
 

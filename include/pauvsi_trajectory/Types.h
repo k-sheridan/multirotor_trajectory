@@ -64,6 +64,22 @@ struct GeometricConstraint{
 	double z_max;
 	double radius;
 
+	GeometricConstraint(){}
+
+	GeometricConstraint(Type _type, double val)
+	{
+		type = _type;
+		switch(type)
+		{
+		case PLANE_MIN:
+			val = z_min;
+			break;
+		case PLANE_MAX:
+			val = z_max;
+			break;
+		}
+	}
+
 };
 
 struct AdvancedWaypointConstraint{

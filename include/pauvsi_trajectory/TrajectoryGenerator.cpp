@@ -33,22 +33,29 @@ TrajectorySegment TrajectoryGenerator::computeHighOrderMinimumTimeTrajectory(Dyn
 	}
 	else
 	{
-		constraints.end.t = (constraints.end.pos.toEigen() - constraints.middle.back().pos.toEigen()).norm() * DIST2DT_MULTIPLIER + constraints.middle.back().t;
+		constraints.end.t = (constraints.end.pos.toEigen() - constraints.start.pos.toEigen()).norm() * DIST2DT_MULTIPLIER;
 	}
 
 	ROS_DEBUG_STREAM("intial time guess: " << constraints.getTimes());
 
 	TrajectorySegment seg = solveSegment(constraints);
 
+	ROS_DEBUG_STREAM("size 1: " << seg.x.size());
+
 	seg = this->computeGeometricallyFeasibleTrajectory(constraints);
 
+	ROS_DEBUG_STREAM("size 2: " << seg.x.size());
+
 	seg = this->minimizeTimeFAST(constraints, phys);
+
+	ROS_DEBUG_STREAM("size 3: " << seg.x.size());
 
 	if(DT_OPTIM_ACCURATE)
 	{
 		seg = this->minimizeTimeACCURATE(constraints, phys);
 	}
 
+	ROS_DEBUG_STREAM("size 4: " << seg.x.size());
 
 	return seg;
 }
@@ -61,6 +68,7 @@ TrajectorySegment TrajectoryGenerator::minimizeTimeFAST(DynamicTrajectoryConstra
 
 	TrajectorySegment seg, last_working_seg;
 	seg = solveSegment(constraints);
+	last_working_seg = seg;
 
 	// if not fast optimize each segment instead of whole path
 	int level = 1;
@@ -79,7 +87,11 @@ TrajectorySegment TrajectoryGenerator::minimizeTimeFAST(DynamicTrajectoryConstra
 
 		for(int j = 0; j < D2DT_TIME_OPTIM_ITER; j++)
 		{
+			ROS_DEBUG_STREAM("size before test: " << seg.x.size());
 			pass = this->testSegmentForFeasibilityFAST(seg, phys);
+			ROS_DEBUG_STREAM("size after test: " << seg.x.size());
+
+			ROS_ERROR_COND(j == 0 && !pass, "TRAJECTORY MAY NOT BE FEASIBLE");
 			if(pass)
 			{
 				d2dt_high = d2dt_curr;
@@ -113,6 +125,8 @@ TrajectorySegment TrajectoryGenerator::minimizeTimeFAST(DynamicTrajectoryConstra
 			}
 		}
 	}
+
+	ROS_DEBUG("finished optim");
 
 	return seg;
 }
@@ -690,7 +704,7 @@ Eigen::Vector4d TrajectoryGenerator::calculateMotorForces(EfficientTrajectorySeg
 	//calculate the F_dot_inertial
 	Eigen::Vector3d F_dot_inertial = physical.mass * jerk;
 
-	Eigen::Vector3d F_dot_inertial_bar = (F_dot_inertial / f_total) - (F_inertial * F_inertial.transpose() * F_dot_inertial) / pow(f_total, 3); // equation 3.20 in Cutler's paper
+	Eigen::Vector3d F_dot_inertial_bar = (F_dot_inertial / f_total) - ((F_inertial * F_inertial.transpose() * F_dot_inertial) / (f_total*f_total*f_total)); // equation 3.20 in Cutler's paper
 
 
 	//calculate the desired angular rate
@@ -703,9 +717,9 @@ Eigen::Vector4d TrajectoryGenerator::calculateMotorForces(EfficientTrajectorySeg
 	Eigen::Vector3d F_dot_dot_inertial = physical.mass * snap;
 
 	Eigen::Vector3d F_dot_dot_inertial_bar = (F_dot_dot_inertial / f_total) -
-			(2 * F_dot_inertial * F_inertial.transpose() * F_dot_inertial   +   F_inertial * F_dot_inertial.transpose() * F_dot_inertial    +
-					F_inertial * F_inertial.transpose() * F_dot_dot_inertial) / pow(f_total, 3)  +
-					(3 * F_inertial * F_inertial.transpose() * F_dot_inertial) / pow(f_total, 5);
+			((2 * F_dot_inertial * F_inertial.transpose() * F_dot_inertial   +   F_inertial * F_dot_inertial.transpose() * F_dot_inertial    +
+					F_inertial * F_inertial.transpose() * F_dot_dot_inertial) / (f_total*f_total*f_total))  +
+					((3 * F_inertial * F_inertial.transpose() * F_dot_inertial) / (f_total*f_total*f_total*f_total*f_total));
 
 	// calculate the angular acceleration now
 	tempCross = F_inertial_bar.cross((F_dot_dot_inertial_bar - omega_body.cross(omega_body.cross(F_dot_inertial_bar))));
@@ -718,6 +732,8 @@ Eigen::Vector4d TrajectoryGenerator::calculateMotorForces(EfficientTrajectorySeg
 
 	Eigen::Vector4d b;
 	b << f_total, moment_body(0), moment_body(1), moment_body(2);
+
+	//ROS_DEBUG_STREAM("accel should be: " << accel.transpose());
 
 	return physical.torqueTransition_inv * b;
 
@@ -736,12 +752,13 @@ Eigen::Quaterniond TrajectoryGenerator::calculateRotation(TrajectorySegment acce
 
 	double f_total = F_inertial.norm(); // the total force required at max acceleration
 
+	ROS_DEBUG_STREAM("rot f_tot: " << f_total);
 	Eigen::Vector3d F_inertial_bar = F_inertial / f_total; // should find the direction vector of f inertial
 
 	Eigen::Vector3d F_body_bar;
 	F_body_bar << 0, 0, 1;
 
-	double quatNorm = 1 / sqrt(2*(1 + F_inertial_bar.transpose() * F_body_bar));
+	double quatNorm = 1 / sqrt(2.0*(1 + F_inertial_bar.transpose() * F_body_bar));
 
 	Eigen::Quaterniond quat;
 
@@ -784,9 +801,11 @@ nav_msgs::Path TrajectoryGenerator::generateTrajectorySegmentPath(TrajectorySegm
 
 	TrajectorySegment accel;
 
+	ROS_DEBUG("running polyder");
 	accel.x = polyDer(polyDer(seg.x));
 	accel.y = polyDer(polyDer(seg.y));
 	accel.z = polyDer(polyDer(seg.z));
+	ROS_DEBUG("ran polyder");
 
 	for(double t = seg.t0; t < seg.tf; t += VISUALIZE_DT)
 	{

@@ -4,15 +4,33 @@ geometry_msgs/Vector3 goalPosition
 geometry_msgs/Vector3 goalVelocity
 geometry_msgs/Vector3 goalAcceleration
 geometry_msgs/Vector3 goalJerk
+geometry_msgs/Vector3 goalSnap
 
 geometry_msgs/Vector3 startPosition
 geometry_msgs/Vector3 startVelocity
 geometry_msgs/Vector3 startAcceleration
 geometry_msgs/Vector3 startJerk
+geometry_msgs/Vector3 startSnap
 
-nav_msgs/OccupancyGrid map
+float64 startMinZ
+float64 startMaxZ
+
+# x1, y1, z1;
+# x2, y2, z2;
+# ...
+geometry_msgs/Vector3[] middle
+int32 middle_size
+
+# minZ1, maxZ1;
+# minZ2, maxZ2;
+# ...
+float64[] middleGeometricConstraints
 
 ---
 
-std_msgs/Float32MultiArray trajectory
-std_msgs/Float32MultiArray segmentTimes
+# A, B, C = x
+# D, E, F = y
+# G, H, I = z
+std_msgs/Float64MultiArray trajectory
+
+float64 tf

@@ -10,5 +10,8 @@
     
     <!--<node name="rviz" pkg="rviz" type="rviz" />-->
     
-    <node pkg="pauvsi_trajectory" type="virtual_flight_controller" name="flight_controller" />
+    <node pkg="pauvsi_trajectory" type="virtual_flight_controller" name="flight_controller" output="screen"/>
+    
+    <node pkg="pauvsi_trajectory" type="unit_test" name="unit_test" output="screen"/>
+    
 </launch>
