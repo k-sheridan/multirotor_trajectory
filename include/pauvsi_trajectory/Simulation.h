@@ -9,14 +9,14 @@
 #define PAUVSI_TRAJECTORY_INCLUDE_PAUVSI_TRAJECTORY_SIMULATION_H_
 
 #define MOTOR_FORCE SIGMA 0.2
-#define POSITION_SIGMA 0.05
-#define OMEGA_SIGMA 0.01
-#define VEL_SIGMA 0.05
-#define QUAT_SIGMA 0.01
+#define POSITION_SIGMA 0.01
+#define OMEGA_SIGMA 0.0005
+#define VEL_SIGMA 0.01
+#define QUAT_SIGMA 0.001
 
 #define PHYSICS_UPDATE_DT 0.01
 
-#define MOTOR_FORCE_TOPIC "motorForces"
+#define MOTOR_FORCE_TOPIC "forceRequest"
 #define POSE_TOPIC "state/pose"
 #define TWIST_TOPIC "state/twist"
 

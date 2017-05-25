@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 	/*//testing
 	forces << 12.5, 12.5, 12.8, 12.5;
 	started = true;*/
-	/*
+
 	ros::Rate loop_rate(1/PHYSICS_UPDATE_DT);
 	while(ros::ok())
 	{
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 		publishState();
 		ros::spinOnce();
 		loop_rate.sleep();
-	}*/
+	}
 
 	ros::spin();
 
@@ -181,8 +181,44 @@ void updateForces(const std_msgs::Float64MultiArrayConstPtr msg){
 	forces(3) = msg->data[3];
 	started = true;
 
-	physicsUpdate(0.01);
-	publishState();
+	if(forces(0) > max_motor_force){
+		forces(0) = max_motor_force;
+		ROS_WARN("constrained force");
+	}
+	else if(forces(0) < min_motor_force){
+		forces(0) = min_motor_force;
+		ROS_WARN("constrained force");
+	}
+
+	if(forces(1) > max_motor_force){
+		forces(1) = max_motor_force;
+		ROS_WARN("constrained force");
+	}
+	else if(forces(1) < min_motor_force){
+		forces(1) = min_motor_force;
+		ROS_WARN("constrained force");
+	}
+
+	if(forces(2) > max_motor_force){
+		forces(2) = max_motor_force;
+		ROS_WARN("constrained force");
+	}
+	else if(forces(2) < min_motor_force){
+		forces(2) = min_motor_force;
+		ROS_WARN("constrained force");
+	}
+
+	if(forces(3) > max_motor_force){
+		forces(3) = max_motor_force;
+		ROS_WARN("constrained force");
+	}
+	else if(forces(3) < min_motor_force){
+		forces(3) = min_motor_force;
+		ROS_WARN("constrained force");
+	}
+
+	//physicsUpdate(0.01);
+	//publishState();
 }
 
 void physicsUpdate(double dt)
@@ -196,7 +232,7 @@ void physicsUpdate(double dt)
 	F_b << 0, 0, torque_force(0);
 	moment << torque_force(1), torque_force(2), torque_force(3);
 
-	ROS_DEBUG_STREAM("total force: " << torque_force(0));
+	//ROS_DEBUG_STREAM("total force: " << torque_force(0));
 
 	Eigen::Vector3d accel = (1.0/mass)*(attitude * F_b) - gravity;
 
