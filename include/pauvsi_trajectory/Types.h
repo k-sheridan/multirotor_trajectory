@@ -54,8 +54,8 @@ struct Point{
 
 struct GeometricConstraint{
 	enum Type {
-		PLANE_MIN,
-		PLANE_MAX
+		Z_PLANE_MIN,
+		Z_PLANE_MAX
 	};
 
 	Type type;
@@ -71,11 +71,11 @@ struct GeometricConstraint{
 		type = _type;
 		switch(type)
 		{
-		case PLANE_MIN:
-			val = z_min;
+		case Z_PLANE_MIN:
+			z_min = val;
 			break;
-		case PLANE_MAX:
-			val = z_max;
+		case Z_PLANE_MAX:
+			z_max = val;
 			break;
 		}
 	}

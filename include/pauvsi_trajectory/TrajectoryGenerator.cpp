@@ -354,21 +354,21 @@ bool TrajectoryGenerator::testSegmentForGeometricFeasibility(TrajectorySegment s
 
 		for(auto e : geoConstraints)
 		{
-			if(e.type == e.PLANE_MIN)
+			if(e.type == e.Z_PLANE_MIN)
 			{
 				if(z < e.z_min)
 				{
 					failureTime = t;
-					ROS_DEBUG_STREAM("-failed at " << t);
+					ROS_DEBUG_STREAM("-failed at " << t << " z min: " << e.z_min);
 					return false;
 				}
 			}
-			else if(e.type == e.PLANE_MAX)
+			else if(e.type == e.Z_PLANE_MAX)
 			{
 				if(z > e.z_max)
 				{
 					failureTime = t;
-					ROS_DEBUG_STREAM("+failed at " << t);
+					ROS_DEBUG_STREAM("+failed at " << t << " z min: " << e.z_max);
 					return false;
 				}
 			}

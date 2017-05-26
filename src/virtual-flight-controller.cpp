@@ -67,8 +67,8 @@ int main(int argc, char **argv)
 	J << J_MATRIX;
 	torque_transition << TORQUE_TRANSITION;
 	mass = MASS;
-	min_motor_force = MOTOR_FORCE_MIN;
-	max_motor_force = MOTOR_FORCE_MAX;
+	min_motor_force = MOTOR_ABS_MIN;
+	max_motor_force = MOTOR_ABS_MAX;
 
 	rng.seed(RANDOM_SEED);
 

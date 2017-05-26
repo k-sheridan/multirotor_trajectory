@@ -19,7 +19,6 @@ float64 startMaxZ
 # x2, y2, z2;
 # ...
 geometry_msgs/Vector3[] middle
-int32 middle_size
 
 # minZ1, maxZ1;
 # minZ2, maxZ2;

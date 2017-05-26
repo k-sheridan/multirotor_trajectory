@@ -9,7 +9,7 @@
 #define PAUVSI_TRAJECTORY_INCLUDE_PAUVSI_TRAJECTORY_SIMULATION_H_
 
 #define MOTOR_FORCE SIGMA 0.2
-#define POSITION_SIGMA 0.01
+#define POSITION_SIGMA 0.02
 #define OMEGA_SIGMA 0.0005
 #define VEL_SIGMA 0.01
 #define QUAT_SIGMA 0.001
@@ -24,6 +24,9 @@
 #define WORLD_FRAME "world"
 
 #define START_POS -9, -9, 0.5
+
+#define MOTOR_ABS_MAX 25
+#define MOTOR_ABS_MIN 0.1
 
 
 

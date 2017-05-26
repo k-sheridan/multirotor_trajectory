@@ -169,11 +169,11 @@ int main(int argc, char **argv)
 
 
 	GeometricConstraint floor, ceil, obs;
-	floor.type = GeometricConstraint::PLANE_MIN;
+	floor.type = GeometricConstraint::Z_PLANE_MIN;
 	floor.z_min = 0;
-	obs.type = GeometricConstraint::PLANE_MIN;
+	obs.type = GeometricConstraint::Z_PLANE_MIN;
 	obs.z_min = 2.25;
-	ceil.type = GeometricConstraint::PLANE_MAX;
+	ceil.type = GeometricConstraint::Z_PLANE_MAX;
 	ceil.z_max = 3;
 
 	dc.start.t = 0;
