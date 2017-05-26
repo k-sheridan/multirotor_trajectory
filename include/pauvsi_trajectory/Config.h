@@ -27,7 +27,7 @@
 #define DIST2Dt_MAX 3
 #define D2DT_TIME_OPTIM_ITER 6
 
-#define DT_OPTIM_ACCURATE false
+#define DT_OPTIM_ACCURATE true
 #define ACCURATE_TIME_OPTIM_ITERS 10
 #define ACCURATE_DT_LOW -2
 #define ACCURATE_DT_HIGH 2

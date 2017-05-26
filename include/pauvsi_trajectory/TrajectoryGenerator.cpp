@@ -42,10 +42,6 @@ TrajectorySegment TrajectoryGenerator::computeHighOrderMinimumTimeTrajectory(Dyn
 
 	ROS_DEBUG_STREAM("size 1: " << seg.x.size());
 
-	seg = this->computeGeometricallyFeasibleTrajectory(constraints);
-
-	ROS_DEBUG_STREAM("size 2: " << seg.x.size());
-
 	seg = this->minimizeTimeFAST(constraints, phys);
 
 	ROS_DEBUG_STREAM("size 3: " << seg.x.size());
@@ -54,6 +50,10 @@ TrajectorySegment TrajectoryGenerator::computeHighOrderMinimumTimeTrajectory(Dyn
 	{
 		seg = this->minimizeTimeACCURATE(constraints, phys);
 	}
+
+	ROS_DEBUG_STREAM("size 2: " << seg.x.size());
+
+	seg = this->computeGeometricallyFeasibleTrajectory(constraints);
 
 	ROS_DEBUG_STREAM("size 4: " << seg.x.size());
 

@@ -16,7 +16,7 @@
 // these are the max and min individual motor forces.
 // you can tune the aggression of the quad using the max in Newtons
 #define MOTOR_FORCE_MIN 1
-#define MOTOR_FORCE_MAX 20
+#define MOTOR_FORCE_MAX 15
 
 //mass of quad kg
 #define MASS 5
