@@ -18,6 +18,10 @@
 #define MOTOR_FORCE_MIN 1
 #define MOTOR_FORCE_MAX 15
 
+//absolute maximum motor force possible
+#define MOTOR_ABS_MAX 25
+#define MOTOR_ABS_MIN 0.1
+
 //mass of quad kg
 #define MASS 5
 
