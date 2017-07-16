@@ -10,7 +10,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
-#include <gazebo_msgs/ApplyBodyWrench.h>
+#include <gazebo_msgs/SetModelState.h>
+#include <gazebo_msgs/GetModelState.h>
 
 #include <tf/transform_broadcaster.h>
 
@@ -25,7 +26,7 @@
 
 #include <eigen3/Eigen/Geometry>
 
-#define USE_GAZEBO false
+#define USE_GAZEBO true
 
 void updateForces(const std_msgs::Float64MultiArrayConstPtr msg);
 
@@ -52,7 +53,7 @@ Eigen::Vector3d omega;
 boost::mt19937 rng;
 
 #if USE_GAZEBO
-ros::ServiceClient wrench_client;
+ros::ServiceClient setState_client, getState_client;
 #else
 ros::Publisher pose_pub, twist_pub;
 #endif
@@ -66,7 +67,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle nh;
 
 #if USE_GAZEBO
-	wrench_client = nh.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
+	setState_client = nh.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
 #else
 	pose_pub = nh.advertise<geometry_msgs::PoseStamped>(POSE_TOPIC, 1);
 	twist_pub = nh.advertise<geometry_msgs::TwistStamped>(TWIST_TOPIC, 1);
@@ -99,9 +100,9 @@ int main(int argc, char **argv)
 	while(ros::ok())
 	{
 		if(started){ physicsUpdate(PHYSICS_UPDATE_DT); }
-#if !USE_GAZEBO
+
 		publishState();
-#endif
+
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
@@ -178,7 +179,7 @@ void publishState()
 	twist.header.stamp = ros::Time::now();
 	pose_pub.publish(pose);
 	twist_pub.publish(twist);
-
+#endif
 	//send a transform for visualization and other algorithms
 	static tf::TransformBroadcaster br;
 	tf::Transform transform;
@@ -186,7 +187,6 @@ void publishState()
 	transform.setRotation(tf::Quaternion(attitude.x(), attitude.y(), attitude.z(), attitude.w()));
 
 	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), WORLD_FRAME, BASE_FRAME));
-#endif
 }
 
 void updateForces(const std_msgs::Float64MultiArrayConstPtr msg){
@@ -248,30 +248,6 @@ void physicsUpdate(double dt)
 	F_b << 0, 0, torque_force(0);
 	moment << torque_force(1), torque_force(2), torque_force(3);
 
-#if USE_GAZEBO
-	gazebo_msgs::ApplyBodyWrench srv;
-	srv.request.body_name = "quadrotor::base_link";
-	srv.request.duration = ros::Duration(PHYSICS_UPDATE_DT);
-	srv.request.reference_frame = "world";
-	srv.request.wrench.force.x = 0;
-	srv.request.wrench.force.x = 0;
-	srv.request.wrench.force.x = torque_force(0);
-	srv.request.wrench.torque.x = torque_force(1);
-	srv.request.wrench.torque.x = torque_force(2);
-	srv.request.wrench.torque.x = torque_force(3);
-
-	if(wrench_client.call(srv))
-	{
-		if(!srv.response.success)
-		{
-			ROS_ERROR_STREAM("call response fail: " << srv.response.status_message);
-		}
-	}
-	else
-	{
-		ROS_ERROR("service call failed");
-	}
-#else
 	//ROS_DEBUG_STREAM("total force: " << torque_force(0));
 
 	Eigen::Vector3d accel = (1.0/mass)*(attitude * F_b) - gravity;
@@ -293,7 +269,41 @@ void physicsUpdate(double dt)
 	vel = vel + accel * dt;
 
 	ROS_INFO_STREAM("actual accel: " << accel.transpose());
+
+#if USE_GAZEBO
+	gazebo_msgs::SetModelState srv;
+	srv.request.model_state.model_name = "quadrotor";
+	srv.request.model_state.reference_frame = "world";
+	srv.request.model_state.pose.orientation.w = attitude.w();
+	srv.request.model_state.pose.orientation.x = attitude.x();
+	srv.request.model_state.pose.orientation.y = attitude.y();
+	srv.request.model_state.pose.orientation.z = attitude.z();
+
+	srv.request.model_state.pose.position.x = pos.x();
+	srv.request.model_state.pose.position.y = pos.y();
+	srv.request.model_state.pose.position.z = pos.z();
+
+	srv.request.model_state.twist.angular.x = omega.x();
+	srv.request.model_state.twist.angular.y = omega.y();
+	srv.request.model_state.twist.angular.z = omega.z();
+
+	srv.request.model_state.twist.linear.x = vel.x();
+	srv.request.model_state.twist.linear.y = vel.y();
+	srv.request.model_state.twist.linear.z = vel.z();
+
+	if(setState_client.call(srv))
+	{
+		if(!srv.response.success)
+		{
+			ROS_ERROR_STREAM("call response fail: " << srv.response.status_message);
+		}
+	}
+	else
+	{
+		ROS_ERROR("service call failed");
+	}
 #endif
+
 
 }
 
