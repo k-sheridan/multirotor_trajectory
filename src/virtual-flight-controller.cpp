@@ -10,6 +10,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
+#include <gazebo_msgs/ApplyBodyWrench.h>
+
 #include <tf/transform_broadcaster.h>
 
 #include <boost/random.hpp>
@@ -22,6 +24,8 @@
 #include "../include/pauvsi_trajectory/Simulation.h"
 
 #include <eigen3/Eigen/Geometry>
+
+#define USE_GAZEBO true
 
 void updateForces(const std_msgs::Float64MultiArrayConstPtr msg);
 
@@ -47,8 +51,13 @@ Eigen::Vector3d omega;
 
 boost::mt19937 rng;
 
+#if USE_GAZEBO
+ros::ServiceClient wrench_client;
+#else
 ros::Publisher pose_pub, twist_pub;
+#endif
 ros::Subscriber motor_force_sub;
+
 
 int main(int argc, char **argv)
 {
@@ -56,8 +65,12 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle nh;
 
+#if USE_GAZEBO
+	wrench_client = nh.serviceClient<gazebo_msgs::ApplyBodyWrench>("/gazebo/apply_body_wrench");
+#else
 	pose_pub = nh.advertise<geometry_msgs::PoseStamped>(POSE_TOPIC, 1);
 	twist_pub = nh.advertise<geometry_msgs::TwistStamped>(TWIST_TOPIC, 1);
+#endif
 
 	motor_force_sub = nh.subscribe(MOTOR_FORCE_TOPIC, 1, updateForces);
 
@@ -86,7 +99,9 @@ int main(int argc, char **argv)
 	while(ros::ok())
 	{
 		if(started){ physicsUpdate(PHYSICS_UPDATE_DT); }
+#if !USE_GAZEBO
 		publishState();
+#endif
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
@@ -98,6 +113,7 @@ int main(int argc, char **argv)
 
 void publishState()
 {
+#if !USE_GAZEBO
 	boost::normal_distribution<> nd(0.0, POSITION_SIGMA);
 
 	boost::variate_generator<boost::mt19937&,
@@ -160,7 +176,6 @@ void publishState()
 
 	pose.header.stamp = ros::Time::now();
 	twist.header.stamp = ros::Time::now();
-
 	pose_pub.publish(pose);
 	twist_pub.publish(twist);
 
@@ -171,6 +186,7 @@ void publishState()
 	transform.setRotation(tf::Quaternion(attitude.x(), attitude.y(), attitude.z(), attitude.w()));
 
 	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), WORLD_FRAME, BASE_FRAME));
+#endif
 }
 
 void updateForces(const std_msgs::Float64MultiArrayConstPtr msg){
@@ -232,6 +248,30 @@ void physicsUpdate(double dt)
 	F_b << 0, 0, torque_force(0);
 	moment << torque_force(1), torque_force(2), torque_force(3);
 
+#if USE_GAZEBO
+	gazebo_msgs::ApplyBodyWrench srv;
+	srv.request.body_name = "quadrotor::base_link";
+	srv.request.duration = ros::Duration(-1.0);
+	srv.request.reference_frame = "world";
+	srv.request.wrench.force.x = 0;
+	srv.request.wrench.force.x = 0;
+	srv.request.wrench.force.x = torque_force(0);
+	srv.request.wrench.torque.x = torque_force(1);
+	srv.request.wrench.torque.x = torque_force(2);
+	srv.request.wrench.torque.x = torque_force(3);
+
+	if(wrench_client.call(srv))
+	{
+		if(!srv.response.success)
+		{
+			ROS_ERROR_STREAM("call response fail: " << srv.response.status_message);
+		}
+	}
+	else
+	{
+		ROS_ERROR("service call failed");
+	}
+#else
 	//ROS_DEBUG_STREAM("total force: " << torque_force(0));
 
 	Eigen::Vector3d accel = (1.0/mass)*(attitude * F_b) - gravity;
@@ -253,6 +293,7 @@ void physicsUpdate(double dt)
 	vel = vel + accel * dt;
 
 	ROS_INFO_STREAM("actual accel: " << accel.transpose());
+#endif
 
 }
 

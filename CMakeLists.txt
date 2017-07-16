@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   dynamic_reconfigure
   tf
+  gazebo_msgs
 )
 
 find_package(Eigen3 REQUIRED)

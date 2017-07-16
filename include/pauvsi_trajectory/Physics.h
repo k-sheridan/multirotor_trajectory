@@ -16,7 +16,7 @@
 // these are the max and min individual motor forces.
 // you can tune the aggression of the quad using the max in Newtons
 #define MOTOR_FORCE_MIN 1
-#define MOTOR_FORCE_MAX 15
+#define MOTOR_FORCE_MAX 14
 
 //absolute maximum motor force possible
 #define MOTOR_ABS_MAX 25
