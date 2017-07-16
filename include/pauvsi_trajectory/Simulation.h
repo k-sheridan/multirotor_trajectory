@@ -23,7 +23,7 @@
 #define BASE_FRAME "base_link"
 #define WORLD_FRAME "world"
 
-#define START_POS -9, -9, 1
+#define START_POS 9, -9, 1
 
 
 

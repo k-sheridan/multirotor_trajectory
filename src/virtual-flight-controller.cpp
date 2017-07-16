@@ -25,7 +25,7 @@
 
 #include <eigen3/Eigen/Geometry>
 
-#define USE_GAZEBO true
+#define USE_GAZEBO false
 
 void updateForces(const std_msgs::Float64MultiArrayConstPtr msg);
 
@@ -251,7 +251,7 @@ void physicsUpdate(double dt)
 #if USE_GAZEBO
 	gazebo_msgs::ApplyBodyWrench srv;
 	srv.request.body_name = "quadrotor::base_link";
-	srv.request.duration = ros::Duration(-1.0);
+	srv.request.duration = ros::Duration(PHYSICS_UPDATE_DT);
 	srv.request.reference_frame = "world";
 	srv.request.wrench.force.x = 0;
 	srv.request.wrench.force.x = 0;
