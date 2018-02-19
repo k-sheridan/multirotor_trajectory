@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pauvsi_trajectory)
+project(multirotor_trajectory)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
@@ -46,7 +46,7 @@ catkin_package(
 #  LIBRARIES pauvsi_vio
 #  CATKIN_DEPENDS cv_bridge image_transport roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
-   DEPENDS eigen 
+   DEPENDS eigen
 )
 
 add_library(polynomial include/pauvsi_trajectory/Polynomial.hpp)
@@ -69,5 +69,3 @@ target_link_libraries(unit_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} trajGen p
 
 add_executable(virtual_flight_controller src/virtual-flight-controller.cpp)
 target_link_libraries(virtual_flight_controller ${catkin_LIBRARIES} ${Eigen_LIBRARIES} ${Boost_LIBRARIES} trajGen polynomial)
-
-
