@@ -1,4 +1,4 @@
-function [C] = polynomialTrajectorySolver(X, Y, Z, Mass, Moment, MaxVel, MinZForce, MaxForce, MaxAngle)
+function [C] = polynomialTrajectorySolver(X, Y, Z, Mass, Moment, MaxVel, MinZForce, MaxForce, MaxAngle, ITERATIONS)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 %   This will solve for the coefficients of a constrained 9 order
@@ -6,7 +6,6 @@ function [C] = polynomialTrajectorySolver(X, Y, Z, Mass, Moment, MaxVel, MinZFor
 % END_POINT_MODES: 'FULL', 'VEL', 'NOVEL'
 % for vel and no vel use zeros in their place
 %the number of iterations
-ITERATIONS = 10;
 
 %declare ti as zero
 ti = 0;
