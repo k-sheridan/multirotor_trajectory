@@ -178,5 +178,10 @@ struct PhysicalCharacterisics{
 	Eigen::Matrix4d torqueTransition_inv; // maps total force and moments to motor forces
 };
 
+struct DesiredState{
+	Eigen::Vector3d pos, vel, accel, snap, jerk;
+};
+
+
 
 #endif /* PAUVSI_TRAJECTORY_INCLUDE_PAUVSI_TRAJECTORY_TYPES_H_ */

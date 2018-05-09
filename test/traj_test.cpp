@@ -6,10 +6,10 @@
  */
 #include "ros/ros.h"
 
-#include "../include/pauvsi_trajectory/Polynomial.hpp"
-#include "../include/pauvsi_trajectory/TrajectoryGenerator.h"
+#include "../include/multirotor_trajectory/Polynomial.hpp"
+#include "../include/multirotor_trajectory/TrajectoryGenerator.h"
 
-#include "../include/pauvsi_trajectory/Physics.h"
+#include "../include/multirotor_trajectory/Physics.h"
 
 #include <std_msgs/Float64MultiArray.h>
 

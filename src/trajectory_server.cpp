@@ -1,18 +1,18 @@
 #include "ros/ros.h"
-#include <pauvsi_trajectory/trajectoryGeneration.h>
+#include <multirotor_trajectory/trajectoryGeneration.h>
 #include <nav_msgs/Path.h>
 
-#include "../include/pauvsi_trajectory/Config.h"
-#include "../include/pauvsi_trajectory/Polynomial.hpp"
-#include "../include/pauvsi_trajectory/Physics.h"
+#include "../include/multirotor_trajectory/Config.h"
+#include "../include/multirotor_trajectory/Polynomial.hpp"
+#include "../include/multirotor_trajectory/Physics.h"
 
-#include "../include/pauvsi_trajectory/TrajectoryGenerator.h"
+#include "../include/multirotor_trajectory/TrajectoryGenerator.h"
 
 #include <eigen3/Eigen/Geometry>
 
 PhysicalCharacterisics phys;
 
-bool generateTrajectory(pauvsi_trajectory::trajectoryGeneration::Request &req, pauvsi_trajectory::trajectoryGeneration::Response &res);
+bool generateTrajectory(multirotor_trajectory::trajectoryGeneration::Request &req, multirotor_trajectory::trajectoryGeneration::Response &res);
 
 ros::Publisher path_pub;
 
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-bool generateTrajectory(pauvsi_trajectory::trajectoryGeneration::Request &req, pauvsi_trajectory::trajectoryGeneration::Response &res)
+bool generateTrajectory(multirotor_trajectory::trajectoryGeneration::Request &req, multirotor_trajectory::trajectoryGeneration::Response &res)
 {
 	//ROS_INFO("Starting trajectory generation from <%f, %f, %f> to <%f, %f, %f>", req.quadPosition.x, req.quadPosition.y, req.quadPosition.z, req.goalPosition.x, req.goalPosition.y, req.goalPosition.z);
 	TrajectoryGenerator tg;

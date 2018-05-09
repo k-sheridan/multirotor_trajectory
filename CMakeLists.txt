@@ -49,23 +49,25 @@ catkin_package(
    DEPENDS eigen
 )
 
-add_library(polynomial include/pauvsi_trajectory/Polynomial.hpp)
-set_target_properties(polynomial PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(polynomial ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
+add_library(multirotor_trajectory_polynomial include/multirotor_trajectory/Polynomial.hpp)
+set_target_properties(multirotor_trajectory_polynomial PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(multirotor_trajectory_polynomial ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
 
-add_library(types include/pauvsi_trajectory/Types.h)
-set_target_properties(types PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(types ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
+add_library(multirotor_trajectory_types include/multirotor_trajectory/Types.h)
+set_target_properties(multirotor_trajectory_types PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(multirotor_trajectory_types ${Eigen_LIBRARIES} ${catkin_LIBRARIES})
 
-add_library(trajGen include/pauvsi_trajectory/TrajectoryGenerator.cpp)
-target_link_libraries(trajGen ${Eigen_LIBRARIES} ${catkin_LIBRARIES} polynomial types)
+add_library(multirotor_trajectory_generator include/multirotor_trajectory/TrajectoryGenerator.cpp)
+target_link_libraries(multirotor_trajectory_generator ${Eigen_LIBRARIES} ${catkin_LIBRARIES} multirotor_trajectory_polynomial multirotor_trajectory_types)
 
 add_executable(trajectory_server src/trajectory_server.cpp)
-target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen_LIBRARIES} trajGen)
+target_link_libraries(trajectory_server ${catkin_LIBRARIES} ${Eigen_LIBRARIES} multirotor_trajectory_generator)
 add_dependencies(trajectory_server ${PROJECT_NAME}_generate_messages_cpp)
 
-add_executable(unit_test test/unit_test.cpp)
-target_link_libraries(unit_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} trajGen polynomial)
+add_executable(traj_test test/traj_test.cpp)
+target_link_libraries(traj_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} multirotor_trajectory_generator multirotor_trajectory_polynomial)
 
-add_executable(virtual_flight_controller src/virtual-flight-controller.cpp)
-target_link_libraries(virtual_flight_controller ${catkin_LIBRARIES} ${Eigen_LIBRARIES} ${Boost_LIBRARIES} trajGen polynomial)
+
+#OBSOLETE
+#add_executable(virtual_flight_controller src/virtual-flight-controller.cpp)
+#target_link_libraries(virtual_flight_controller ${catkin_LIBRARIES} ${Eigen_LIBRARIES} ${Boost_LIBRARIES} trajGen polynomial)

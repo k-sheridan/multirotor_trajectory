@@ -26,6 +26,11 @@
 
 #include <eigen3/Eigen/Geometry>
 
+/*
+ * NOTE: OBSOLETE Use rotors simulator: https://github.com/ethz-asl/rotors_simulator
+ */
+
+
 #define USE_GAZEBO true
 
 void updateForces(const std_msgs::Float64MultiArrayConstPtr msg);
