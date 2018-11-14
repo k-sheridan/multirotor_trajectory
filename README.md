@@ -4,3 +4,5 @@
 
 This package is capable of generating minimum time polynomial trajectories through N waypoints with structure constraints.
  
+![alt text](images/traj1.png)
+![alt text](images/traj2.png)
